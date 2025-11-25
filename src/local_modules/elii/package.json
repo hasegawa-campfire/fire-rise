@@ -1,0 +1,21 @@
+{
+  "name": "elii",
+  "version": "0.1.0",
+  "description": "Web Components based HTML component system with reactive bindings",
+  "type": "module",
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js"
+  },
+  "scripts": {
+    "test": "node --import tsx --test"
+  },
+  "keywords": [
+    "web-components",
+    "reactive",
+    "html-modules",
+    "custom-elements"
+  ],
+  "author": "",
+  "license": "MIT"
+}

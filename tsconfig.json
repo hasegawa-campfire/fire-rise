@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "esnext",
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
+    "moduleResolution": "node",
+    "strict": true,
+    "allowJs": true,
+    "checkJs": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "elii": ["./src/local_modules/elii/index.js"]
+    },
+    "outDir": "./dist",
+    "plugins": [{ "name": "ts-html-modules-plugin" }]
+  },
+  "include": ["src/**/*.m.html", "src/**/*.js", "src/**/*.ts"]
+}

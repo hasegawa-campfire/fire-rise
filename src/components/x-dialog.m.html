@@ -1,0 +1,124 @@
+<script type="module">
+  import { defineComponent, reactive } from 'elii'
+
+  export default defineComponent({
+    tag: 'x-dialog',
+    document: import.meta.document,
+    setup() {
+      const state = reactive({
+        active: false,
+        inert: false,
+        refDialog: /** @type {HTMLDialogElement | null} */ (null),
+      })
+
+      const open = (wait = 100) => {
+        const dialog = state.refDialog
+        if (!dialog) throw Error('Dialog not found')
+
+        state.inert = true
+        dialog.showModal()
+        setTimeout(() => (state.active = true), wait)
+        setTimeout(() => (state.inert = false), wait + 800)
+      }
+
+      const close = () => {
+        state.active = false
+        state.refDialog?.close()
+      }
+
+      /**
+       * @param {MouseEvent} e
+       */
+      const onDialogClick = (e) => {
+        if (e.target === e.currentTarget) close()
+      }
+
+      return {
+        state,
+        close,
+        onDialogClick,
+        $expose: {
+          open,
+          close,
+        },
+      }
+    },
+  })
+</script>
+
+<template>
+  <dialog
+    data-ref="state.refDialog"
+    data-bind-class-active="state.active"
+    data-bind-inert="state.inert"
+    data-bind-onclick="onDialogClick"
+  >
+    <div class="body">
+      <div class="content">
+        <slot></slot>
+        <button data-bind-onclick="close">Close</button>
+      </div>
+    </div>
+  </dialog>
+</template>
+
+<style>
+  :host {
+    display: contents;
+  }
+
+  dialog {
+    inset: 20cqw 0 auto;
+    margin: 0 auto;
+    box-sizing: border-box;
+    width: fit-content;
+    max-width: calc(100cqw - 32px);
+    height: auto;
+    max-height: calc(100dvh - 20cqw - 16px);
+    padding: unset;
+    color: unset;
+    background: unset;
+    border: unset;
+    outline: unset;
+    overflow: unset;
+    user-select: unset;
+    -webkit-user-select: unset;
+
+    &::backdrop {
+      opacity: 0;
+      transition: opacity 0.2s linear;
+    }
+
+    &:not([open]) {
+      transition: display 0.2s allow-discrete, overlay 0.2s allow-discrete;
+    }
+
+    &.active {
+      &::backdrop {
+        opacity: 1;
+        transition: opacity 0.3s linear;
+      }
+    }
+  }
+
+  .body {
+    opacity: 0;
+    translate: 0 -24px;
+    transition: translate 0.2s 0.2s ease-out, opacity 0.2s linear;
+
+    dialog.active & {
+      opacity: 1;
+      translate: 0 0px;
+      transition: translate 0.3s ease-out, opacity 0.3s linear;
+    }
+  }
+
+  .content {
+    background-color: #fff;
+    padding: 24px 32px 32px;
+
+    @media (width < 460px) {
+      padding: 24px 16px 32px;
+    }
+  }
+</style>

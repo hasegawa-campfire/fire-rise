@@ -1,0 +1,238 @@
+<script type="module">
+  import { defineComponent, reactive } from 'elii'
+
+  export default defineComponent({
+    tag: 'todo-app',
+    document: import.meta.document,
+    props: {},
+    setup() {
+      const state = reactive({
+        todos: [],
+        newTodo: '',
+        get remaining() {
+          return this.todos.filter((t) => !t.done).length
+        },
+        get remainingText() {
+          const count = this.remaining
+          return `${count} ${count === 1 ? 'item' : 'items'} left`
+        },
+        get hasCompleted() {
+          return this.todos.some((t) => t.done)
+        },
+      })
+
+      let nextId = 1
+
+      const addTodo = () => {
+        const text = state.newTodo.trim()
+        if (text) {
+          state.todos = [
+            ...state.todos,
+            {
+              id: nextId++,
+              text: text,
+              done: false,
+            },
+          ]
+          state.newTodo = ''
+        }
+      }
+
+      const removeTodo = (id) => {
+        state.todos = state.todos.filter((t) => t.id !== id)
+      }
+
+      const clearCompleted = () => {
+        state.todos = state.todos.filter((t) => !t.done)
+      }
+
+      return {
+        state,
+        addTodo,
+        removeTodo,
+        clearCompleted,
+      }
+    },
+  })
+</script>
+
+<template>
+  <div class="todo-app">
+    <h1>📝 Todo List</h1>
+
+    <div class="input-area">
+      <input data-model-value="state.newTodo" placeholder="What needs to be done?" class="todo-input" />
+      <button data-bind-onclick="addTodo" class="add-button">Add</button>
+    </div>
+
+    <template data-if="state.todos.length">
+      <ul class="todo-list">
+        <template data-for="todo in state.todos" data-key="todo.id">
+          <li data-bind-class="{ completed: todo.done }">
+            <input type="checkbox" data-model-checked="todo.done" class="todo-checkbox" />
+            <span data-bind-text="todo.text" class="todo-text"></span>
+            <button data-bind-onclick="() => removeTodo(todo.id)" class="remove-button">×</button>
+          </li>
+        </template>
+      </ul>
+
+      <div class="stats">
+        <span data-bind-text="state.remainingText"></span>
+        <template data-if="state.hasCompleted">
+          <button data-bind-onclick="clearCompleted" class="clear-button">Clear completed</button>
+        </template>
+      </div>
+    </template>
+
+    <template data-if="!state.todos.length">
+      <div class="empty-state">
+        <p>No todos yet. Add one above!</p>
+      </div>
+    </template>
+  </div>
+</template>
+
+<style>
+  :host {
+    display: block;
+    padding: 20px;
+  }
+
+  .todo-app {
+    max-width: 600px;
+    margin: 0 auto;
+    font-family: system-ui, -apple-system, sans-serif;
+  }
+
+  h1 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 30px;
+  }
+
+  .input-area {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .todo-input {
+    flex: 1;
+    padding: 12px 16px;
+    font-size: 16px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    outline: none;
+  }
+
+  .todo-input:focus {
+    border-color: #4caf50;
+  }
+
+  .add-button {
+    padding: 12px 24px;
+    font-size: 16px;
+    background: #4caf50;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.2s;
+  }
+
+  .add-button:hover {
+    background: #45a049;
+  }
+
+  .todo-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .todo-list li {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: white;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    transition: all 0.2s;
+  }
+
+  .todo-list li:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .todo-list li.completed .todo-text {
+    text-decoration: line-through;
+    opacity: 0.5;
+  }
+
+  .todo-checkbox {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+  }
+
+  .todo-text {
+    flex: 1;
+    font-size: 16px;
+  }
+
+  .remove-button {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: #ff5252;
+    color: white;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 20px;
+    line-height: 1;
+    transition: all 0.2s;
+  }
+
+  .remove-button:hover {
+    background: #ff1744;
+    transform: scale(1.1);
+  }
+
+  .stats {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 20px;
+    padding: 12px 16px;
+    background: #f5f5f5;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #666;
+  }
+
+  .clear-button {
+    padding: 6px 12px;
+    font-size: 12px;
+    background: #ff9800;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.2s;
+  }
+
+  .clear-button:hover {
+    background: #f57c00;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 40px;
+    color: #999;
+    font-style: italic;
+  }
+</style>

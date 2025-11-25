@@ -1,0 +1,46 @@
+<script type="module">
+  import { defineComponent, reactive } from 'elii'
+  import { pushRoute } from '@/r.js'
+  import './help-title.m.html'
+
+  export default defineComponent({
+    tag: 'title-root',
+    document: import.meta.document,
+    setup() {
+      const state = reactive({
+        refHelpTitle: /** @type {{open: (wait?: number) => void} | null} */ (null),
+      })
+
+      const openHelp = () => {
+        state.refHelpTitle?.open()
+      }
+
+      /**
+       * @param {string} levelId
+       */
+      const goToPlay = (levelId) => {
+        pushRoute({ page: 'play', levelId })
+      }
+
+      return {
+        goToPlay,
+        state,
+        openHelp,
+      }
+    },
+  })
+</script>
+
+<template>
+  <h1>Title</h1>
+  <button data-bind-onclick="() => goToPlay('tutorial1')">Play1</button>
+  <button data-bind-onclick="() => goToPlay('tutorial2')">Play2</button>
+  <button data-bind-onclick="openHelp">Help</button>
+  <help-title data-ref="state.refHelpTitle"></help-title>
+</template>
+
+<style>
+  :host {
+    display: block;
+  }
+</style>

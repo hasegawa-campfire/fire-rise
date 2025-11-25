@@ -1,0 +1,23 @@
+{
+  "name": "fire-tower",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "serve": "http-server -p 3000 src",
+    "serve:ssl": "http-server -p 3000 src -S -C ./localhost+3.pem -K ./localhost+3-key.pem",
+    "updates": "ncu -c 3 -i"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/dom-chromium-ai": "^0.0.11",
+    "@types/node": "^24.10.1",
+    "@types/serviceworker": "^0.0.167",
+    "npm-check-updates": "^19.1.2",
+    "http-server": "^14.1.1",
+    "ts-html-modules-plugin": "file:src/local_modules/ts-html-modules-plugin",
+    "typescript": "^5.9.3"
+  }
+}

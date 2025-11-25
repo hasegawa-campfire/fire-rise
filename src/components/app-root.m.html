@@ -1,0 +1,38 @@
+<script type="module">
+  import { defineComponent, reactive } from 'elii'
+  import { route } from '@/r.js'
+
+  import './title-root.m.html'
+  import './play-root.m.html'
+
+  export default defineComponent({
+    tag: 'app-root',
+    document: import.meta.document,
+    setup() {
+      const state = reactive({})
+
+      console.log(route.page)
+
+      return {
+        route,
+        state,
+      }
+    },
+  })
+</script>
+
+<template>
+  <template data-if="route.page === 'title'">
+    <title-root></title-root>
+  </template>
+  <template data-if="route.page === 'play'">
+    <play-root></play-root>
+  </template>
+</template>
+
+<style>
+  :host {
+    display: block;
+    padding: 20px;
+  }
+</style>

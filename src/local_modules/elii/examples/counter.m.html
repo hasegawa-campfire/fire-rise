@@ -1,0 +1,101 @@
+<script type="module">
+  import { defineComponent, reactive } from 'elii'
+
+  export default defineComponent({
+    tag: 'counter-app',
+    document: import.meta.document,
+    props: {
+      initial: 0,
+    },
+    setup(props) {
+      const state = reactive({
+        count: props.initial,
+      })
+
+      const increment = () => {
+        state.count++
+      }
+
+      const decrement = () => {
+        state.count--
+      }
+
+      const reset = () => {
+        state.count = props.initial
+      }
+
+      return {
+        props,
+        state,
+        increment,
+        decrement,
+        reset,
+      }
+    },
+  })
+</script>
+
+<template>
+  <div class="counter">
+    <h1 data-bind-text="state.count"></h1>
+    <div class="buttons">
+      <button data-bind-onclick="decrement">-</button>
+      <button data-bind-onclick="reset">Reset</button>
+      <button data-bind-onclick="increment">+</button>
+    </div>
+    <p class="info">Initial value: <span data-bind-text="props.initial"></span></p>
+  </div>
+</template>
+
+<style>
+  :host {
+    display: block;
+    padding: 20px;
+  }
+
+  .counter {
+    text-align: center;
+    font-family: system-ui, -apple-system, sans-serif;
+  }
+
+  h1 {
+    color: #0066cc;
+    font-size: 64px;
+    margin: 20px 0;
+    font-weight: bold;
+  }
+
+  .buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin: 20px 0;
+  }
+
+  button {
+    font-size: 24px;
+    padding: 12px 24px;
+    border: 2px solid #0066cc;
+    background: white;
+    color: #0066cc;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: 600;
+  }
+
+  button:hover {
+    background: #0066cc;
+    color: white;
+  }
+
+  button:active {
+    transform: scale(0.95);
+  }
+
+  .info {
+    margin-top: 20px;
+    color: #666;
+    font-size: 14px;
+  }
+</style>
