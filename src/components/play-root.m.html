@@ -1,10 +1,11 @@
 <script type="module">
-  import { defineComponent, reactive, toRaw } from 'elii'
-  import { isAddableBlocksToLine, isGoalState, isStuckState } from '@/rule/block-utils.js'
-  import { pushRoute, route } from '@/r.js'
+  import { defineComponent, reactive } from 'elii'
+  import { getCompletionRate, isGoalState, isStuckState } from '@/rule/block-utils.js'
+  import { route, pushRoute } from '@/r.js'
   import { levels } from '@/rule/level.js'
 
-  const INVALID_INDEX = 999
+  import './play-board.m.html'
+  import './x-bg.m.html'
 
   export default defineComponent({
     tag: 'play-root',
@@ -17,167 +18,54 @@
 
       const state = reactive({
         lines: structuredClone(shuffledLines),
-        selectedLineIndex: INVALID_INDEX,
-        selectedBlockIndex: INVALID_INDEX,
+        particleLevel: getCompletionRate(shuffledLines) ** 2 * 0.8 + 0.2,
       })
 
       const retry = () => {
         state.lines = structuredClone(shuffledLines)
+        state.particleLevel = getCompletionRate(state.lines) ** 2 * 0.8 + 0.2
       }
 
       const goToTitle = () => {
         pushRoute({ page: 'title' })
       }
 
-      /**
-       * 盤面外をクリックした場合、選択状態を解除する
-       * @param {MouseEvent} e
-       */
-      const onOutOfBoundsClick = (e) => {
-        if (e.defaultPrevented) return
-        state.selectedLineIndex = INVALID_INDEX
-        state.selectedBlockIndex = INVALID_INDEX
-      }
-
-      addEventListener('click', onOutOfBoundsClick)
-
-      /**
-       * 盤面内をクリックした場合、選択状態を更新する
-       * @param {MouseEvent & { currentTarget: HTMLElement }} e
-       */
-      const onBoardClick = (e) => {
-        e.preventDefault()
-
-        const rect = e.currentTarget.getBoundingClientRect()
-        const eventLineIndex = Math.floor((e.clientX - rect.left) / (rect.width / state.lines.length))
-        const eventLine = state.lines[eventLineIndex]
-
-        let eventBlockIndex = eventLine.size - Math.floor((e.clientY - rect.top) / (rect.height / eventLine.size)) - 1
-        const eventBlock = eventLine.blocks.at(eventBlockIndex)
-
-        // ブロックをクリックした場合
-        if (eventBlock) {
-          // クリックしたブロックに繋がる最も根本の同色ブロックを選択したことにする
-          for (let i = eventBlockIndex - 1; i >= 0; i--) {
-            if (eventLine.blocks[i].color === eventBlock.color) eventBlockIndex = i
-            else break
-          }
-
-          // ブロックを選択状態にする。既に選択されていたら解除する
-          if (state.selectedLineIndex == eventLineIndex && eventBlockIndex === state.selectedBlockIndex) {
-            state.selectedLineIndex = INVALID_INDEX
-            state.selectedBlockIndex = INVALID_INDEX
-          } else {
-            state.selectedLineIndex = eventLineIndex
-            state.selectedBlockIndex = eventBlockIndex
-          }
-          return
+      const onBlockMove = () => {
+        console.log('onBlockMove')
+        if (isGoalState(state.lines)) {
+          console.log('Goal state reached')
+          state.particleLevel = 1
+        } else if (isStuckState(state.lines)) {
+          console.log('No possible moves')
+          state.particleLevel = 0
+        } else {
+          state.particleLevel = getCompletionRate(state.lines) ** 2 * 0.8 + 0.2
         }
-
-        // ブロックの無い場所をクリックした場合、選択中のブロックがそこへ移動可能なら移動する
-        const selectedLine = state.lines.at(state.selectedLineIndex)
-
-        if (selectedLine && isAddableBlocksToLine(eventLine, selectedLine, state.selectedBlockIndex)) {
-          const selectedBlocks = selectedLine.blocks.slice(state.selectedBlockIndex)
-          eventLine.blocks = [...eventLine.blocks, ...selectedBlocks]
-          selectedLine.blocks = selectedLine.blocks.slice(0, state.selectedBlockIndex)
-
-          if (isGoalState(state.lines)) {
-            console.log('Goal state reached')
-          } else if (isStuckState(state.lines)) {
-            console.log('No possible moves')
-          }
-        }
-
-        // ブロックの選択を解除する
-        state.selectedLineIndex = INVALID_INDEX
-        state.selectedBlockIndex = INVALID_INDEX
-      }
-
-      /**
-       * @param {Line} line
-       * @returns {boolean}
-       */
-      const isSelectable = (line) => {
-        const selectedLine = state.lines.at(state.selectedLineIndex)
-        return !!selectedLine && isAddableBlocksToLine(line, selectedLine, state.selectedBlockIndex)
       }
 
       return {
         state,
-        onBoardClick,
-        goToTitle,
         retry,
-        isSelectable,
+        goToTitle,
+        onBlockMove,
       }
     },
   })
 </script>
 
 <template>
-  <button data-bind-onclick="retry">retry</button>
-  <button data-bind-onclick="goToTitle">title</button>
+  <x-bg data-prop-particle-level="state.particleLevel">
+    <div class="content">
+      <button data-on-click="retry">retry</button>
+      <button data-on-click="goToTitle">title</button>
 
-  <div
-    class="board"
-    data-bind-style--rows="state.lines.reduce((max, line) => Math.max(max, line.size), 0)"
-    data-bind-style--cols="state.lines.length"
-    data-bind-onclick="onBoardClick"
-  >
-    <template data-for="line, lineIndex in state.lines" data-key="line.id">
-      <template data-if="isSelectable(line)">
-        <div class="selectable-col" data-bind-style--x="lineIndex"></div>
-      </template>
-    </template>
-
-    <template data-for="line, lineIndex in state.lines" data-key="line.id">
-      <template data-for="block, blockIndex in line.blocks" data-key="block.id">
-        <div
-          class="block"
-          data-bind-class-selected="state.selectedLineIndex == lineIndex && state.selectedBlockIndex <= blockIndex"
-          data-bind-style--color="block.color"
-          data-bind-style--x="lineIndex"
-          data-bind-style--y="line.size - blockIndex - 1"
-        ></div>
-      </template>
-    </template>
-  </div>
+      <play-board data-prop-lines="state.lines" data-prop-on-block-move="onBlockMove"></play-board>
+    </div>
+  </x-bg>
 </template>
 
 <style>
   :host {
-    display: block;
-  }
-
-  .board {
-    position: relative;
-    aspect-ratio: var(--cols) / var(--rows);
-    --block-width: calc(100% / var(--cols));
-    --block-height: calc(100% / var(--rows));
-    background-color: #f0f0f0;
-  }
-
-  .selectable-col {
-    position: absolute;
-    left: calc(var(--block-width) * var(--x));
-    top: 0;
-    width: var(--block-width);
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.1);
-  }
-
-  .block {
-    position: absolute;
-    left: calc(var(--block-width) * var(--x));
-    top: calc(var(--block-height) * var(--y));
-    width: var(--block-width);
-    height: var(--block-height);
-    background-color: var(--color);
-    border: 4px dashed transparent;
-    box-sizing: border-box;
-
-    &.selected {
-      border-color: orange;
-    }
+    display: contents;
   }
 </style>

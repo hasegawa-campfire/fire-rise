@@ -1,6 +1,11 @@
 <script type="module">
   import { defineComponent, reactive } from 'elii'
   import { pushRoute } from '@/r.js'
+  import { levels } from '@/rule/level.js'
+
+  import './title-logo.m.html'
+  import './title-stage.m.html'
+  import './x-bg.m.html'
   import './help-title.m.html'
 
   export default defineComponent({
@@ -26,21 +31,89 @@
         goToPlay,
         state,
         openHelp,
+        levels, //: [{ name: 'サンプル', id: 'tutorial1' }],
       }
     },
   })
 </script>
 
 <template>
-  <h1>Title</h1>
-  <button data-bind-onclick="() => goToPlay('tutorial1')">Play1</button>
-  <button data-bind-onclick="() => goToPlay('tutorial2')">Play2</button>
-  <button data-bind-onclick="openHelp">Help</button>
-  <help-title data-ref="state.refHelpTitle"></help-title>
+  <x-bg data-prop-particle-level="0.2">
+    <div class="bg-container">
+      <div class="bg"></div>
+    </div>
+
+    <title-logo></title-logo>
+
+    <button class="help-button" data-on-click="openHelp">Help</button>
+
+    <div class="content">
+      <help-title data-ref="state.refHelpTitle"></help-title>
+
+      <div class="stages">
+        <template data-for="level, index in levels.toReversed()" data-key="level.id">
+          <title-stage
+            data-prop-name="level.name"
+            data-prop-level-index="levels.length - index - 1"
+            data-on-click="() => goToPlay(level.id)"
+          ></title-stage>
+        </template>
+      </div>
+    </div>
+  </x-bg>
 </template>
 
 <style>
   :host {
-    display: block;
+    display: contents;
+  }
+
+  title-logo {
+    position: fixed;
+    inset: 60px 0 auto;
+    margin: auto;
+    width: max-content;
+    height: max-content;
+    z-index: 10000;
+  }
+
+  .bg-container {
+    position: absolute;
+    inset: 0;
+    container-type: size;
+    z-index: -1;
+  }
+
+  .bg {
+    position: absolute;
+    inset: 0;
+    background-image: url('/assets/board-bg.png');
+    background-size: 40cqw 20cqw;
+    background-position: 50% 0;
+    opacity: 0.06;
+  }
+
+  .help-button {
+    position: fixed;
+    top: 20px;
+    right: calc(50% - 240px);
+    z-index: 10000;
+  }
+
+  .content {
+    position: relative;
+    padding: 260px 0 100px;
+    z-index: 1;
+  }
+
+  .stages {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 120px;
+    width: 200px;
+    margin: 0 auto;
+    min-height: 100%;
+    min-width: 0;
+    align-content: center;
   }
 </style>

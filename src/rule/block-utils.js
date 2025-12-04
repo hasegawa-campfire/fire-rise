@@ -6,6 +6,8 @@
  * @property {number} srcLineIndex
  */
 
+import { shuffleArray } from '@/lib/utils.js'
+
 /**
  * @typedef {Object} GetPuzzleScoreContext
  * @property {Line[]} lines
@@ -58,6 +60,19 @@ function getDefaultPuzzleScore(context) {
 
 /**
  * @param {Line[]} lines
+ */
+export function shuffleLines(lines) {
+  for (const size of new Set(lines.map((line) => line.size))) {
+    const blockses = lines.filter((line) => line.size === size).map((line) => line.blocks)
+    for (const [index, blocks] of shuffleArray(blockses).entries()) {
+      lines[index].blocks = blocks
+    }
+  }
+  return lines
+}
+
+/**
+ * @param {Line[]} lines
  * @param {number} maxMoves
  * @param {number} trials
  * @param {(context: GetPuzzleScoreContext) => number} [getPuzzleScore]
@@ -69,6 +84,8 @@ export function shuffleBlocks(lines, maxMoves = 20, trials = 20, getPuzzleScore,
 
   let bestScore = -Infinity
   let bestLines = lines
+
+  shuffleLines(lines)
 
   for (let j = 0; j < trials; j++) {
     const clonedLines = lines.map((line) => {
@@ -296,4 +313,49 @@ export function getStateHash(lines) {
 
   // 符号なし整数として16進数に変換
   return (hash >>> 0).toString(16).padStart(8, '0')
+}
+
+/**
+ * ブロックIDからブロックを取得する
+ * @param {Line[]} lines
+ * @param {string} blockId
+ */
+export function findBlockById(lines, blockId) {
+  for (const [lineIndex, line] of lines.entries()) {
+    for (const [blockIndex, block] of line.blocks.entries()) {
+      if (block.id === blockId) return { line, lineIndex, block, blockIndex }
+    }
+  }
+  return null
+}
+
+/**
+ * 完成率を取得する
+ * @param {Line[]} lines
+ */
+export function getCompletionRate(lines) {
+  // 既出の色を記録
+  const seenColors = new Set()
+  let okCount = 0
+  let ngCount = 0
+
+  for (const line of lines) {
+    let prevColor = null
+
+    for (const block of line.blocks) {
+      // 色が変わったとき既出の色であればNG
+      if (block.color === prevColor) {
+        okCount++
+      } else {
+        if (seenColors.has(block.color)) ngCount++
+        else seenColors.add(block.color)
+      }
+
+      prevColor = block.color
+    }
+  }
+
+  if (okCount + ngCount === 0) return 1
+
+  return okCount / (okCount + ngCount)
 }

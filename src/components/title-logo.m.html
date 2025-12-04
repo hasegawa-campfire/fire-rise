@@ -1,0 +1,72 @@
+<script type="module">
+  import { defineComponent } from 'elii'
+
+  export default defineComponent({
+    tag: 'title-logo',
+    document: import.meta.document,
+    setup() {
+      return {
+        title: 'FireRise',
+      }
+    },
+  })
+</script>
+
+<template>
+  <div class="logo">
+    <div class="text-overlay shadow" data-text="title"></div>
+    <div class="text-overlay outline2" data-text="title"></div>
+    <div class="text-overlay outline1" data-text="title"></div>
+    <div class="text-overlay base" data-text="title"></div>
+    <div class="text-overlay mask" data-text="title"></div>
+    <div class="text-basis" data-text="title"></div>
+  </div>
+</template>
+
+<style>
+  :host {
+    display: block;
+  }
+
+  .logo {
+    position: relative;
+    font-size: 80px;
+    font-weight: 900;
+    letter-spacing: 0.02em;
+    color: #000;
+    width: max-content;
+    margin: 0 auto;
+  }
+
+  .text-overlay {
+    position: absolute;
+    inset: 0;
+
+    &.mask {
+      color: #fff;
+      mask-image: url('/assets/wave.png');
+      mask-size: auto 0.5em;
+      mask-position: center 0.5em;
+      mask-repeat: repeat-x;
+    }
+
+    &.base {
+      -webkit-text-stroke: 4px gold;
+      color: gold;
+    }
+
+    &.outline1 {
+      -webkit-text-stroke: 0.3em darkred;
+    }
+
+    &.outline2 {
+      -webkit-text-stroke: calc(0.3em + 8px) #fff;
+    }
+
+    &.shadow {
+      margin-top: 10px;
+      -webkit-text-stroke: calc(0.3em + 8px) #000;
+      opacity: 0.2;
+    }
+  }
+</style>

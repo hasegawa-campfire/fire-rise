@@ -1,0 +1,182 @@
+<script type="module">
+  import { defineComponent } from 'elii'
+
+  import './x-text.m.html'
+
+  export default defineComponent({
+    tag: 'title-stage',
+    document: import.meta.document,
+    props: {
+      name: '',
+      levelIndex: 0,
+    },
+    setup(props) {
+      return {
+        props,
+      }
+    },
+  })
+</script>
+
+<template>
+  <div class="item">
+    <div class="item-inner border"></div>
+    <div class="item-inner fill"></div>
+
+    <div class="star">
+      <div class="star-image outline"></div>
+      <div class="star-image base"></div>
+    </div>
+
+    <div>
+      <div class="level" data-text="`Level ${props.levelIndex + 1}`"></div>
+      <x-text class="name" data-prop-value="props.name"></x-text>
+    </div>
+
+    <div class="details">
+      <div class="detail-name">Wins:</div>
+      <div class="detail-value">1</div>
+      <div class="detail-name">Highest streak:</div>
+      <div class="detail-value">1</div>
+    </div>
+
+    <div class="item-bottom side-shadow left"></div>
+    <div class="item-bottom side-shadow right"></div>
+    <div class="item-bottom" data-class-even="props.levelIndex % 2 === 0"></div>
+  </div>
+</template>
+
+<style>
+  :host {
+    display: contents;
+  }
+
+  .item {
+    position: relative;
+    background-color: #0003;
+    border: 4px solid #0002;
+    border-radius: 999px 999px 0 0;
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-sizing: border-box;
+    box-shadow: 0 0 0 4px #fff;
+  }
+
+  .item-inner {
+    position: absolute;
+    border-radius: 999px 999px 0 0;
+
+    &.border {
+      inset: 16px 16px 0;
+      border: 4px solid #0002;
+    }
+
+    &.fill {
+      inset: 24px 24px 0;
+      background-color: #0002;
+    }
+  }
+
+  .star {
+    position: absolute;
+    left: 50%;
+    top: -40px;
+  }
+
+  .star-image {
+    mask-image: url('/assets/star.png');
+    mask-size: 100% 100%;
+    mask-position: center;
+    mask-repeat: no-repeat;
+    background-color: gold;
+    translate: -50% -50%;
+
+    &.base {
+      width: 40px;
+      height: 40px;
+      background-image: linear-gradient(135deg, gold, gold 50%, orange 50%, orange);
+    }
+
+    &.outline {
+      position: absolute;
+      width: 56px;
+      height: 56px;
+      background-color: #fff;
+    }
+  }
+
+  .level {
+    color: #fff;
+    font-size: 12px;
+    text-align: center;
+    margin-bottom: 4px;
+  }
+
+  .name {
+    color: #fff;
+    font-size: 24px;
+    font-weight: 700;
+    text-align: center;
+  }
+
+  .details {
+    position: absolute;
+    bottom: 30px;
+    right: 30px;
+    color: #fff;
+    font-size: 12px;
+    display: grid;
+    grid-template-columns: auto auto;
+    gap: 0 4px;
+    justify-items: end;
+  }
+
+  .item-bottom {
+    position: absolute;
+    left: -12px;
+    right: -12px;
+    bottom: -4px;
+    height: 30px;
+    border: 4px solid #5d1a00;
+    border-radius: 2px;
+    box-sizing: border-box;
+
+    background-image: linear-gradient(to bottom, #0002, #0002 50%, transparent 50%, transparent),
+      linear-gradient(
+        to right,
+        #921400,
+        #921400 47%,
+        #5d1a00 47%,
+        #5d1a00 50%,
+        #bd1900 50%,
+        #bd1900 97%,
+        #5d1a00 97%,
+        #5d1a00
+      );
+    background-size: 69% 100%;
+
+    &.even {
+      background-position-x: 110%;
+    }
+
+    &.side-shadow {
+      width: 4px;
+      box-shadow: 0 0 0 4px #fff;
+
+      &.left {
+        rigth: auto;
+        border-right: none;
+        border-top-right-radius: 0;
+      }
+
+      &.right {
+        left: auto;
+        border-left: none;
+        border-top-left-radius: 0;
+      }
+    }
+  }
+</style>

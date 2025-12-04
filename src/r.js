@@ -27,3 +27,29 @@ export const route = createHistoryState(storeKey, {
 export function pushRoute(newState) {
   pushHistoryState(route, newState)
 }
+
+export const images = {
+  takibi: {
+    leg: {
+      orange: '/assets/takibi-leg-orange.png',
+      white: '/assets/takibi-leg-white.png',
+      black: '/assets/takibi-leg-black.png',
+    },
+    bg: {
+      orange: '/assets/takibi-bg-orange.png',
+      white: '/assets/takibi-bg-white.png',
+      black: '/assets/takibi-bg-black.png',
+    },
+    face: '/assets/takibi-face.png',
+    body: {
+      red: '/assets/takibi-body-red.png',
+      blue: '/assets/takibi-body-blue.png',
+      yellow: '/assets/takibi-body-yellow.png',
+      green: '/assets/takibi-body-green.png',
+      orange: '/assets/takibi-body-orange.png',
+      pink: '/assets/takibi-body-pink.png',
+      purple: '/assets/takibi-body-purple.png',
+      grey: '/assets/takibi-body-grey.png',
+    },
+  },
+}

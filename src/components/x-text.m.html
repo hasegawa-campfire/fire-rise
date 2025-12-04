@@ -1,0 +1,56 @@
+<script type="module">
+  import { defineComponent } from 'elii'
+
+  export default defineComponent({
+    tag: 'x-text',
+    document: import.meta.document,
+    props: {
+      value: '',
+      mask: true,
+    },
+    setup(props) {
+      return {
+        props,
+      }
+    },
+  })
+</script>
+
+<template>
+  <template data-if="props.mask">
+    <div class="overlay base" data-text="props.value"></div>
+    <div class="overlay mask" data-text="props.value"></div>
+  </template>
+  <template data-if="!props.mask">
+    <div class="overlay" data-text="props.value"></div>
+  </template>
+  <div class="basis" data-text="props.value"></div>
+</template>
+
+<style>
+  :host {
+    display: block;
+    position: relative;
+    color: #fff;
+  }
+
+  .overlay {
+    position: absolute;
+    inset: 0;
+
+    &.mask {
+      mask-image: url('/assets/wave.png');
+      mask-size: auto 0.5em;
+      mask-position: center 0.5em;
+      mask-repeat: repeat-x;
+    }
+
+    &.base {
+      color: gold;
+    }
+  }
+
+  .basis {
+    -webkit-text-stroke: 0.2em #5d1a00;
+  }
+</style>

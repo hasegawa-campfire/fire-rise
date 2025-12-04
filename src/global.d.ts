@@ -29,4 +29,6 @@ interface Line {
   id: string
   blocks: Block[]
   size: number
+  x: number
+  y: number
 }

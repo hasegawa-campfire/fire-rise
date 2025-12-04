@@ -1,0 +1,163 @@
+<script type="module">
+  import { defineComponent } from 'elii'
+  import { shuffleArray } from '@/lib/utils.js'
+
+  const times = Array.from({ length: 50 }).map((_, i) => i)
+  /**
+   * @param {number} value
+   * @param {number} min
+   * @param {number} max
+   */
+
+  const mapRange = (value, min, max) => min + value * (max - min)
+
+  export default defineComponent({
+    tag: 'x-bg',
+    document: import.meta.document,
+    props: {
+      particleLevel: 0,
+    },
+    setup(props) {
+      const shuffles = {
+        delay: shuffleArray(times),
+        x: shuffleArray(times),
+      }
+
+      const particles = times.map((i) => {
+        return {
+          hidden: !(i < props.particleLevel * times.length),
+          size: mapRange(i / times.length, 6, 14),
+          duration: mapRange(i / times.length, 6, 0.8),
+          delay: shuffles.delay[i] / times.length,
+          x: shuffles.x[i] / times.length,
+          vx: mapRange(Math.random(), -0.2, 0.2),
+        }
+      })
+
+      /**
+       * @param {{x:number, vx:number, hidden: boolean}} particle
+       * @param {number} particleIndex
+       */
+      const onParticleIteration = (particle, particleIndex) => {
+        particle.x = Math.random()
+        particle.vx = mapRange(Math.random(), -0.2, 0.2)
+        particle.hidden = !(particleIndex < props.particleLevel * times.length)
+      }
+
+      return {
+        particles,
+        onParticleIteration,
+      }
+    },
+  })
+</script>
+
+<template>
+  <slot></slot>
+
+  <div class="particles">
+    <template data-for="particle, particleIndex in particles" data-key="particle">
+      <div
+        class="particle"
+        data-style-visibility="particle.hidden ? 'hidden' : 'visible'"
+        data-style-width="`${particle.size}px`"
+        data-style-height="`${particle.size}px`"
+        data-style-left="`${particle.x * 100}%`"
+        data-style--vx="`${particle.vx * 100}cqw`"
+        data-style-animation-duration="`${particle.duration}s`"
+        data-style-animation-delay="`${particle.delay * -particle.duration}s`"
+        data-on-animationiteration="() => onParticleIteration(particle, particleIndex)"
+      ></div>
+    </template>
+  </div>
+
+  <div class="side-bar left"></div>
+  <div class="side-bar right"></div>
+  <div class="footer-effect"></div>
+</template>
+
+<style>
+  :host {
+    display: grid;
+    position: relative;
+    background: linear-gradient(to bottom, rgb(255, 186, 58), rgb(244, 63, 13));
+    min-height: 100dvh;
+    padding: 0 50px 130px;
+    box-sizing: border-box;
+    z-index: 0;
+  }
+
+  .particles {
+    position: absolute;
+    inset: 0;
+    container-type: size;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .particle {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 10px;
+    height: 10px;
+    background-color: orange;
+    border-radius: 50%;
+    animation: particle-animation 1s linear infinite;
+    will-change: transform, left;
+  }
+
+  @keyframes particle-animation {
+    0% {
+      transform: translate(calc(-50% + var(--vx)), calc(100cqh + 100%));
+    }
+    100% {
+      transform: translate(calc(-50%), calc(0cqh - 100%));
+    }
+  }
+
+  .side-bar {
+    position: absolute;
+    top: 0;
+    width: 20px;
+    bottom: 0;
+    background-image: linear-gradient(
+      to bottom,
+      #921400,
+      #921400 47%,
+      #5d1a00 47%,
+      #5d1a00 50%,
+      #bd1900 50%,
+      #bd1900 97%,
+      #5d1a00 97%,
+      #5d1a00
+    );
+    background-size: 100% 200px;
+    border: 0 solid #5d1a00;
+    box-sizing: border-box;
+    z-index: 10000;
+
+    &.left {
+      left: 0;
+      border-right-width: 4px;
+      box-shadow: 4px 0 0 #fff;
+    }
+
+    &.right {
+      right: 0;
+      border-left-width: 4px;
+      box-shadow: -4px 0 0 #fff;
+    }
+  }
+
+  .footer-effect {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 100px;
+    background-image: url('/assets/half-tone.png');
+    background-size: auto 100%;
+    z-index: 10001;
+  }
+</style>

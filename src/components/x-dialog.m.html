@@ -49,14 +49,14 @@
 <template>
   <dialog
     data-ref="state.refDialog"
-    data-bind-class-active="state.active"
-    data-bind-inert="state.inert"
-    data-bind-onclick="onDialogClick"
+    data-class-active="state.active"
+    data-prop-inert="state.inert"
+    data-on-click="onDialogClick"
   >
     <div class="body">
       <div class="content">
         <slot></slot>
-        <button data-bind-onclick="close">Close</button>
+        <button data-on-click="close">Close</button>
       </div>
     </div>
   </dialog>
