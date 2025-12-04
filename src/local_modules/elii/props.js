@@ -47,6 +47,12 @@ export function parseAttributeValue(value, valueType) {
 export function defineProperties(target, propsDefinition, reactiveProps) {
   /** @type {[string, PropertyDescriptor][]} */
   const descriptorEntries = Object.keys(propsDefinition).map((propName) => {
+    // @ts-ignore これから定義するプロパティなので問題なし
+    const propValue = target[propName]
+    if (propValue !== undefined) {
+      reactiveProps[propName] = propValue
+    }
+
     /** @type {PropertyDescriptor} */
     const descriptor = {
       get() {

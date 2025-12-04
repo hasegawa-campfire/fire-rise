@@ -37,11 +37,13 @@ Todo リストアプリケーション。
 
 すべてのディレクティブの総合デモ。
 
-- data-bind-text / data-bind-html
-- data-bind-class（オブジェクト形式）
-- data-if
-- data-for（キー付き）
+- `data-text` / `data-html`: テキストと HTML のバインディング
+- `data-class`: 動的なクラスバインディング（オブジェクト形式）
+- `data-if`: 条件付きレンダリング
+- `data-for`: リストレンダリング（キー付き）
 - ネストされたループ
+- `data-model-*`: 双方向バインディング
+- `data-on-*`: イベントハンドリング
 
 ## 使用方法
 
@@ -72,11 +74,11 @@ Todo リストアプリケーション。
       const templateEl = document.createElement('template')
       templateEl.innerHTML = `
       <div class="counter">
-        <h1 data-bind-text="state.count"></h1>
+        <h1 data-text="state.count"></h1>
         <div class="buttons">
-          <button data-bind-onclick="decrement">-</button>
-          <button data-bind-onclick="reset">Reset</button>
-          <button data-bind-onclick="increment">+</button>
+          <button data-on-click="decrement">-</button>
+          <button data-on-click="reset">Reset</button>
+          <button data-on-click="increment">+</button>
         </div>
       </div>
     `

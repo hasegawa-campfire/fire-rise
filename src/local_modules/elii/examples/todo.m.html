@@ -62,24 +62,24 @@
 
     <div class="input-area">
       <input data-model-value="state.newTodo" placeholder="What needs to be done?" class="todo-input" />
-      <button data-bind-onclick="addTodo" class="add-button">Add</button>
+      <button data-on-click="addTodo" class="add-button">Add</button>
     </div>
 
     <template data-if="state.todos.length">
       <ul class="todo-list">
         <template data-for="todo in state.todos" data-key="todo.id">
-          <li data-bind-class="{ completed: todo.done }">
+          <li data-class="{ completed: todo.done }">
             <input type="checkbox" data-model-checked="todo.done" class="todo-checkbox" />
-            <span data-bind-text="todo.text" class="todo-text"></span>
-            <button data-bind-onclick="() => removeTodo(todo.id)" class="remove-button">×</button>
+            <span data-text="todo.text" class="todo-text"></span>
+            <button data-on-click="() => removeTodo(todo.id)" class="remove-button">×</button>
           </li>
         </template>
       </ul>
 
       <div class="stats">
-        <span data-bind-text="state.remainingText"></span>
+        <span data-text="state.remainingText"></span>
         <template data-if="state.hasCompleted">
-          <button data-bind-onclick="clearCompleted" class="clear-button">Clear completed</button>
+          <button data-on-click="clearCompleted" class="clear-button">Clear completed</button>
         </template>
       </div>
     </template>

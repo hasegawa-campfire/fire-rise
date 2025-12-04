@@ -37,13 +37,13 @@
 
 <template>
   <div class="counter">
-    <h1 data-bind-text="state.count"></h1>
+    <h1 data-text="state.count"></h1>
     <div class="buttons">
-      <button data-bind-onclick="decrement">-</button>
-      <button data-bind-onclick="reset">Reset</button>
-      <button data-bind-onclick="increment">+</button>
+      <button data-on-click="decrement">-</button>
+      <button data-on-click="reset">Reset</button>
+      <button data-on-click="increment">+</button>
     </div>
-    <p class="info">Initial value: <span data-bind-text="props.initial"></span></p>
+    <p class="info">Initial value: <span data-text="props.initial"></span></p>
   </div>
 </template>
 

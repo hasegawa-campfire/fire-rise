@@ -90,26 +90,26 @@
     <h1>Directives Demo</h1>
 
     <section class="section">
-      <h2>data-bind-text & data-bind-html</h2>
+      <h2>data-text & data-html</h2>
       <input data-model-value="state.message" placeholder="Type something..." />
-      <p>Text: <span data-bind-text="state.message"></span></p>
+      <p>Text: <span data-text="state.message"></span></p>
       <div>
         HTML:
-        <div data-bind-html="state.htmlMessage"></div>
+        <div data-html="state.htmlMessage"></div>
       </div>
     </section>
 
     <section class="section">
-      <h2>data-bind-class</h2>
-      <button data-bind-onclick="toggleActive">Toggle Active</button>
-      <div data-bind-class="{ active: state.isActive, highlight: state.isActive }" class="box">
-        <span data-bind-text="state.isActive ? 'Active!' : 'Inactive'"></span>
+      <h2>data-class</h2>
+      <button data-on-click="toggleActive">Toggle Active</button>
+      <div data-class="{ active: state.isActive, highlight: state.isActive }" class="box">
+        <span data-text="state.isActive ? 'Active!' : 'Inactive'"></span>
       </div>
     </section>
 
     <section class="section">
       <h2>data-if</h2>
-      <button data-bind-onclick="toggleVisible">Toggle Visibility</button>
+      <button data-on-click="toggleVisible">Toggle Visibility</button>
       <template data-if="state.isVisible">
         <div class="alert">
           <p>✅ This content is visible!</p>
@@ -124,18 +124,18 @@
 
     <section class="section">
       <h2>data-for</h2>
-      <button data-bind-onclick="addItem">Add Item</button>
-      <button data-bind-onclick="removeItem">Remove Item</button>
-      <button data-bind-onclick="shuffleItems">Shuffle</button>
+      <button data-on-click="addItem">Add Item</button>
+      <button data-on-click="removeItem">Remove Item</button>
+      <button data-on-click="shuffleItems">Shuffle</button>
 
-      <p>Count: <span data-bind-text="state.items.length"></span></p>
+      <p>Count: <span data-text="state.items.length"></span></p>
 
       <ul class="item-list">
         <template data-for="item, index in state.items" data-key="item.id">
           <li>
-            <span class="index" data-bind-text="index + 1"></span>
-            <span class="name" data-bind-text="item.name"></span>
-            <span class="id" data-bind-text="`(ID: ${item.id})`"></span>
+            <span class="index" data-text="index + 1"></span>
+            <span class="name" data-text="item.name"></span>
+            <span class="id" data-text="`(ID: ${item.id})`"></span>
           </li>
         </template>
       </ul>
@@ -149,10 +149,10 @@
       <h2>Nested Loops</h2>
       <template data-for="category in state.categories">
         <div class="category">
-          <h3 data-bind-text="category.name"></h3>
+          <h3 data-text="category.name"></h3>
           <ul>
             <template data-for="product in category.products" data-key="product.id">
-              <li data-bind-text="`${product.name} - $${product.price}`"></li>
+              <li data-text="`${product.name} - $${product.price}`"></li>
             </template>
           </ul>
         </div>

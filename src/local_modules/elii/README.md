@@ -76,9 +76,9 @@ Service Worker が自動的に`*.m.html`ファイルを JavaScript に変換し�
 
 <template>
   <div>
-    <h1 data-bind-text="state.count"></h1>
-    <button data-bind-onclick="increment">+</button>
-    <button data-bind-onclick="decrement">-</button>
+    <h1 data-text="state.count"></h1>
+    <button data-on-click="increment">+</button>
+    <button data-on-click="decrement">-</button>
   </div>
 </template>
 
@@ -165,7 +165,8 @@ console.log(computed.doubled) // 10
 const handleClick = batchify((e) => {
   state.count++
   state.user.name = 'Bob'
-}) // 複数の変更を1回のエフェクト実行にまとめる
+  // これらの変更に依存するエフェクトは、このイベントハンドラの終わりにまとめて実行される
+})
 
 element.addEventListener('click', handleClick)
 ```
@@ -206,46 +207,167 @@ element.open() // $exposeで公開されたメソッド
 
 ### ディレクティブ
 
-```html
-<!-- データバインディング -->
-<div data-bind-text="state.message"></div>
-<input data-bind-value="state.text" />
+elii では、HTML 要素に `data-*` 属性を指定することで、リアクティブなデータバインディングを実現します。
 
-<!-- 双方向バインディング -->
+#### テキスト・HTML バインディング
+
+```html
+<!-- textContent を設定 -->
+<div data-text="state.message"></div>
+
+<!-- innerHTML を設定 -->
+<div data-html="state.htmlContent"></div>
+```
+
+#### プロパティ・属性バインディング
+
+```html
+<!-- プロパティバインディング: 要素のプロパティに値を設定 -->
+<input data-prop-value="state.text" />
+<button data-prop-disabled="state.isLoading">Submit</button>
+
+<!-- 属性バインディング: HTML属性として設定 -->
+<img data-attr-src="state.imageUrl" />
+<div data-attr-aria-label="state.label"></div>
+```
+
+`data-prop-*` は要素のプロパティに、`data-attr-*` は HTML 属性に値を設定します。プロパティと属性の違いに注意してください（例: `disabled` プロパティは boolean、`disabled` 属性は文字列）。
+
+#### 双方向バインディング
+
+```html
+<!-- フォーム要素とステートを自動的に同期 -->
 <input data-model-value="state.text" />
 <input type="checkbox" data-model-checked="state.done" />
+<select data-model-value="state.category">
+  <option value="a">Category A</option>
+  <option value="b">Category B</option>
+</select>
+```
 
-<!-- イベントバインディング -->
-<button data-bind-onclick="handleClick">Click</button>
+`data-model-*` を使用すると、ユーザーの入力が自動的にステートに反映されます。
 
-<!-- 条件付きレンダリング -->
+#### イベントバインディング
+
+```html
+<!-- addEventListener でリスナーを追加（推奨） -->
+<button data-on-click="handleClick">Click</button>
+<button data-on-mouse-enter="handleMouseEnter">Hover</button>
+<form data-on-submit="handleSubmit">Submit</form>
+
+<!-- プロパティに直接代入 -->
+<button data-prop-onclick="handleClick">Click</button>
+```
+
+**`data-on-*` の特徴:**
+
+- イベント名はハイフン区切り（`data-on-click`, `data-on-mouse-enter`）
+- `addEventListener` でリスナーを追加
+- イベントハンドラは自動的に `batchify` でラップされるため、複数のステート変更が効率的にバッチ処理される
+
+**`data-prop-*` でのイベント設定:**
+
+- プロパティに直接代入（`onclick`, `onmouseover` など）
+- バッチ処理は行われない
+
+通常は `data-on-*` の使用を推奨します。
+
+#### 条件付きレンダリング
+
+```html
+<!-- 条件が true の場合のみレンダリング -->
+<template data-if="state.isVisible">
+  <div>表示される内容</div>
+</template>
+```
+
+#### リストレンダリング
+
+```html
+<!-- 配列をイテレートして要素を生成 -->
+<template data-for="item in state.items" data-key="item.id">
+  <li data-text="item.name"></li>
+</template>
+
+<!-- インデックス付き -->
+<template data-for="item, index in state.items" data-key="item.id">
+  <li data-text="`${index + 1}. ${item.name}`"></li>
+</template>
+```
+
+`data-key` を指定することで、要素の再利用と効率的な差分更新が可能になります。
+
+#### DOM 要素参照
+
+```html
+<!-- 要素への直接参照を取得 -->
+<input data-ref="state.inputEl" />
+```
+
+ステートに要素が代入されるため、`state.inputEl.focus()` のように DOM API を直接呼び出せます。
+
+#### クラスバインディング
+
+```html
+<!-- オブジェクト形式: キーがクラス名、値が boolean -->
+<div data-class="{ active: state.isActive, disabled: state.isDisabled }"></div>
+
+<!-- 個別クラス形式: 特定のクラスを条件付きで切り替え -->
+<div data-class-active="state.isActive"></div>
+<div data-class-disabled="state.isDisabled"></div>
+
+<!-- 文字列や配列も使用可能 -->
+<div data-class="state.className"></div>
+<div data-class="['btn', state.btnType]"></div>
+```
+
+#### スタイルバインディング
+
+```html
+<!-- オブジェクト形式: プロパティとして設定 -->
+<div data-style="{ color: state.color, fontSize: state.size + 'px' }"></div>
+
+<!-- 個別プロパティ形式 -->
+<div data-style-color="state.color"></div>
+<div data-style-font-size="state.size + 'px'"></div>
+
+<!-- CSS変数の設定 -->
+<div data-style--primary-color="state.theme.primaryColor"></div>
+
+<!-- 文字列形式 -->
+<div data-style="'color: ' + state.color"></div>
+```
+
+#### 条件付きレンダリング・リストレンダリング
+
+```html
+<!-- 条件付きレンダリング: 条件が true の場合のみレンダリング -->
 <template data-if="state.isVisible">
   <div>表示される内容</div>
 </template>
 
-<!-- リストレンダリング -->
+<!-- リストレンダリング: 配列をイテレート -->
 <template data-for="item in state.items" data-key="item.id">
-  <li data-bind-text="item.name"></li>
+  <li data-text="item.name"></li>
 </template>
 
-<!-- DOM 要素参照 -->
-<input data-ref="state.inputEl" />
-
-<!-- クラスバインディング（オブジェクト形式） -->
-<div data-bind-class="{ active: state.isActive, disabled: state.isDisabled }"></div>
-
-<!-- クラスバインディング（個別クラス形式） -->
-<div data-bind-class-active="state.isActive"></div>
-
-<!-- スタイルバインディング（オブジェクト形式） -->
-<div data-bind-style="{ color: state.color, fontSize: state.size + 'px' }"></div>
-
-<!-- スタイルバインディング（個別プロパティ形式） -->
-<div data-bind-style-color="state.color"></div>
-
-<!-- スタイルバインディング（個別CSS変数形式） -->
-<div data-bind-style--primary-color="state.theme.primaryColor"></div>
+<!-- インデックス付き -->
+<template data-for="item, index in state.items" data-key="item.id">
+  <li data-text="`${index + 1}. ${item.name}`"></li>
+</template>
 ```
+
+**`data-key` について:**
+`data-key` を指定すると、配列の要素が追加・削除・並び替えされた際に、DOM 要素を効率的に再利用できます。リストが動的に変化する場合は必ず指定することを推奨します。
+
+#### DOM 要素参照
+
+```html
+<!-- 要素への直接参照を取得 -->
+<input data-ref="state.inputEl" />
+```
+
+`state.inputEl` に要素が代入されるため、`state.inputEl.focus()` のように DOM API を直接呼び出せます。
 
 ## 詳細ドキュメント
 

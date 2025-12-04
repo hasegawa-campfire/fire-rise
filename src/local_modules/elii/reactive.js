@@ -82,6 +82,11 @@ const reactiveHandler = {
       // DOM APIやビルトインオブジェクトのメソッドのみbind(target)
       if (owner && BIND_RAW_PROTOTYPES.includes(owner)) {
         return result.bind(target)
+      } else {
+        /** @type {(this: unknown, ...args: unknown[]) => unknown} */
+        return function (...args) {
+          return reactive(result.apply(this, args))
+        }
       }
     }
 

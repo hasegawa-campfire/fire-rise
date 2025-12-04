@@ -3,101 +3,20 @@
  * reactiveシステムと統合し、data-*ディレクティブを処理します
  */
 
-import { batch, createEffect, createRoot, onCleanup, reactive, untrack } from './reactive.js'
+import { batch, batchify, createEffect, createRoot, onCleanup, reactive, untrack } from './reactive.js'
 import { evaluateExpression, parseForExpression, evaluateAssignmentExpression } from './parser.js'
 import { isComponent } from './component.js'
-import { createObject, toKebabCase } from './utils.js'
-
-/**
- * class属性の値を正規化します
- *
- * @param {unknown} value - class値
- * @returns {string} 正規化されたclass文字列
- */
-function normalizeClass(value) {
-  if (typeof value === 'string') {
-    return value
-  }
-
-  if (Array.isArray(value)) {
-    return value.filter(Boolean).map(normalizeClass).join(' ')
-  }
-
-  if (typeof value === 'object' && value !== null) {
-    return Object.entries(value)
-      .filter(([, enabled]) => enabled)
-      .map(([className]) => className)
-      .join(' ')
-  }
-
-  return ''
-}
-
-/**
- * data-bind-*ディレクティブを処理します
- *
- * @param {HTMLElement | SVGElement} element - 対象要素
- * @param {string} bindTarget - バインド対象（例: "text", "html", "class", "value"）
- * @param {string} expression - 評価する式
- * @param {object} context - 評価コンテキスト
- */
-export function processBind(element, bindTarget, expression, context) {
-  const staticClasses = element.className
-
-  createEffect(() => {
-    const value = evaluateExpression(expression, context)
-
-    if (bindTarget === 'text') {
-      element.textContent = value ?? ''
-    } else if (bindTarget === 'html') {
-      element.innerHTML = value ?? ''
-    } else if (/^class[A-Z]/.test(bindTarget)) {
-      const className = toKebabCase(bindTarget.slice(5)).replace(/^-/, '')
-      element.classList.toggle(className, value)
-    } else if (bindTarget === 'class') {
-      // 既存のclass属性を保持しつつ、動的なclassを追加
-      element.setAttribute('class', normalizeClass([staticClasses, value]))
-    } else if (/^style[-A-Z]/.test(bindTarget)) {
-      const stylePropName = toKebabCase(bindTarget.slice(5)).replace(/^-(?!-)/, '')
-      element.style.setProperty(stylePropName, value)
-    } else if (bindTarget === 'style') {
-      // style属性の特別処理
-      if (typeof value === 'string') {
-        // 文字列なら属性として設定
-        element.setAttribute('style', value)
-      } else if (value == null) {
-        // nullまたはundefinedならstyle属性を削除
-        element.removeAttribute('style')
-      } else if (typeof value === 'object') {
-        // オブジェクトならstyleプロパティに適用
-        Object.assign(element.style, value)
-      }
-    } else {
-      // 通常の属性/プロパティ
-      if (bindTarget in element) {
-        // プロパティとして設定
-        // @ts-ignore - 動的プロパティアクセス
-        element[bindTarget] = value
-      } else {
-        // 属性として設定
-        if (value == null || value === false) {
-          element.removeAttribute(bindTarget)
-        } else {
-          element.setAttribute(bindTarget, value === true ? '' : String(value))
-        }
-      }
-    }
-  })
-}
+import { createObject, toCamelCase } from './utils.js'
 
 /**
  * data-refディレクティブを処理します（DOM要素への参照）
  *
  * @param {HTMLElement | SVGElement} element - 対象要素
+ * @param {string} targetName - ターゲット名(未使用)
  * @param {string} expression - 評価する式（代入先）
  * @param {object} context - 評価コンテキスト
  */
-export function processRef(element, expression, context) {
+export function processRef(element, targetName, expression, context) {
   // 要素を代入
   evaluateAssignmentExpression(expression, context, element)
 
@@ -111,22 +30,24 @@ export function processRef(element, expression, context) {
  * data-model-*ディレクティブを処理します（双方向バインディング）
  *
  * @param {HTMLElement | SVGElement} element - 対象要素
- * @param {string} propName - バインドするプロパティ名（例: "value", "checked", "valueAsNumber"）
+ * @param {string} targetName - バインドするプロパティ名（例: "value", "checked", "value-as-number"）
  * @param {string} expression - 評価する式
  * @param {object} context - 評価コンテキスト
  */
-export function processModel(element, propName, expression, context) {
-  // 読み: state → element[propName]
+export function processModel(element, targetName, expression, context) {
+  targetName = toCamelCase(targetName)
+
+  // 読み: state → element[targetName]
   createEffect(() => {
     const value = evaluateExpression(expression, context)
     // @ts-ignore - 動的プロパティアクセス
-    element[propName] = value
+    element[targetName] = value
   })
 
-  // 書き: element[propName] → state
+  // 書き: element[targetName] → state
   const updateValue = () => {
     // @ts-ignore - 動的プロパティアクセス
-    const value = element[propName]
+    const value = element[targetName]
     evaluateAssignmentExpression(expression, context, value)
   }
 
@@ -138,6 +59,144 @@ export function processModel(element, propName, expression, context) {
     element.addEventListener('input', updateValue)
     onCleanup(() => element.removeEventListener('input', updateValue))
   }
+}
+
+/**
+ * data-textディレクティブを処理します
+ *
+ * @param {HTMLElement | SVGElement} element - 対象要素
+ * @param {string} targetName - ターゲット名(未使用)
+ * @param {string} expression - 評価する式
+ * @param {object} context - 評価コンテキスト
+ */
+export function processText(element, targetName, expression, context) {
+  createEffect(() => {
+    const value = evaluateExpression(expression, context)
+    element.textContent = value ?? ''
+  })
+}
+
+/**
+ * data-htmlディレクティブを処理します
+ *
+ * @param {HTMLElement | SVGElement} element - 対象要素
+ * @param {string} targetName - ターゲット名(未使用)
+ * @param {string} expression - 評価する式
+ * @param {object} context - 評価コンテキスト
+ */
+export function processHtml(element, targetName, expression, context) {
+  createEffect(() => {
+    const value = evaluateExpression(expression, context)
+    element.innerHTML = value ?? ''
+  })
+}
+
+/**
+ * data-classディレクティブを処理します
+ *
+ * @param {HTMLElement | SVGElement} element - 対象要素
+ * @param {string} targetName - ターゲット名(クラス名)
+ * @param {string} expression - 評価する式
+ * @param {object} context - 評価コンテキスト
+ */
+export function processClass(element, targetName, expression, context) {
+  const staticClasses = element.className
+
+  createEffect(() => {
+    const value = evaluateExpression(expression, context)
+
+    if (targetName) {
+      element.classList.toggle(targetName, value)
+    } else {
+      element.setAttribute('class', normalizeClass([staticClasses, value]))
+    }
+  })
+}
+
+/**
+ * data-styleディレクティブを処理します
+ *
+ * @param {HTMLElement | SVGElement} element - 対象要素
+ * @param {string} targetName - ターゲット名(スタイル名)
+ * @param {string} expression - 評価する式
+ * @param {object} context - 評価コンテキスト
+ */
+export function processStyle(element, targetName, expression, context) {
+  targetName = targetName.replace(/^-/, '--')
+
+  createEffect(() => {
+    const value = evaluateExpression(expression, context)
+
+    if (targetName) {
+      element.style.setProperty(targetName, value)
+    } else {
+      if (typeof value === 'string') {
+        element.setAttribute('style', value)
+      } else if (value == null) {
+        element.removeAttribute('style')
+      } else if (typeof value === 'object') {
+        Object.assign(element.style, value)
+      }
+    }
+  })
+}
+
+/**
+ * data-onディレクティブを処理します
+ *
+ * @param {HTMLElement | SVGElement} element - 対象要素
+ * @param {string} targetName - ターゲット名(イベント名)
+ * @param {string} expression - 評価する式
+ * @param {object} context - 評価コンテキスト
+ */
+export function processOn(element, targetName, expression, context) {
+  createEffect(() => {
+    const value = evaluateExpression(expression, context)
+
+    if (typeof value === 'function') {
+      const batchedFn = batchify(value)
+      element.addEventListener(targetName, batchedFn)
+      onCleanup(() => element.removeEventListener(targetName, batchedFn))
+    }
+  })
+}
+
+/**
+ * data-propディレクティブを処理します
+ *
+ * @param {HTMLElement | SVGElement} element - 対象要素
+ * @param {string} targetName - ターゲット名(プロパティ名)
+ * @param {string} expression - 評価する式
+ * @param {object} context - 評価コンテキスト
+ */
+export function processProp(element, targetName, expression, context) {
+  targetName = toCamelCase(targetName)
+
+  createEffect(() => {
+    const value = evaluateExpression(expression, context)
+    // @ts-ignore - 動的プロパティアクセス
+    element[targetName] = value
+  })
+}
+
+/**
+ * data-attrディレクティブを処理します
+ *
+ * @param {HTMLElement | SVGElement} element - 対象要素
+ * @param {string} targetName - ターゲット名(属性名)
+ * @param {string} expression - 評価する式
+ * @param {object} context - 評価コンテキスト
+ */
+export function processAttr(element, targetName, expression, context) {
+  createEffect(() => {
+    const value = evaluateExpression(expression, context)
+
+    if (typeof value === 'boolean' || value == null) {
+      element.toggleAttribute(targetName, value)
+    } else {
+      element.setAttribute(targetName, value)
+    }
+  })
 }
 
 /**
@@ -368,26 +427,13 @@ export function processDirectives(root, context) {
     }
 
     if (node instanceof HTMLElement || node instanceof SVGElement) {
-      // data-ref 属性を処理（DOM要素への参照）
-      if (node.dataset.ref) {
-        processRef(node, node.dataset.ref, context)
-        delete node.dataset.ref
-      }
-
-      // data-bind-* 属性を処理（dataset.bindXxx形式）
-      for (const [key, expression] of Object.entries(node.dataset)) {
-        // bindで始まり、その後が大文字で始まる場合（例: bindText, bindClass）
-        const bindPropName = getTargetName('bind', key)
-        if (bindPropName && expression) {
-          processBind(node, bindPropName, expression, context)
-          delete node.dataset[key]
-        }
-
-        // modelで始まり、その後が大文字で始まる場合（例: modelValue, modelChecked）
-        const modelPropName = getTargetName('model', key)
-        if (modelPropName && expression) {
-          processModel(node, modelPropName, expression, context)
-          delete node.dataset[key]
+      for (const attr of [...node.attributes]) {
+        for (const [key, process] of Object.entries(processAttributes)) {
+          const prefix = `data-${key}`
+          if (attr.name.startsWith(`${prefix}-`) || attr.name === prefix) {
+            process(node, attr.name.slice(prefix.length + 1), attr.value, context)
+            node.removeAttributeNode(attr)
+          }
         }
       }
     }
@@ -395,17 +441,41 @@ export function processDirectives(root, context) {
 }
 
 /**
- * ターゲット名を取得します
- * @param {string} prefix - プレフィックス（例: "bind", "model"）
- * @param {string} key - キー（例: "bindText", "modelValue", "modelChecked"）
- * @returns {string | null} - ターゲット名（例: "text", "class", "value"）
+ * @type {Record<string, (node: HTMLElement | SVGElement, targetName: string, expression: string, context: object) => void>}
  */
-function getTargetName(prefix, key) {
-  if (key.startsWith(prefix)) {
-    const rest = key.slice(prefix.length)
-    if (/^[A-Z]/.test(rest)) {
-      return rest.charAt(0).toLowerCase() + rest.slice(1)
-    }
+const processAttributes = {
+  ref: processRef,
+  model: processModel,
+  text: processText,
+  html: processHtml,
+  class: processClass,
+  style: processStyle,
+  on: processOn,
+  prop: processProp,
+  attr: processAttr,
+}
+
+/**
+ * class属性の値を正規化します
+ *
+ * @param {unknown} value - class値
+ * @returns {string} 正規化されたclass文字列
+ */
+function normalizeClass(value) {
+  if (typeof value === 'string') {
+    return value
   }
-  return null
+
+  if (Array.isArray(value)) {
+    return value.filter(Boolean).map(normalizeClass).join(' ')
+  }
+
+  if (typeof value === 'object' && value !== null) {
+    return Object.entries(value)
+      .filter(([, enabled]) => enabled)
+      .map(([className]) => className)
+      .join(' ')
+  }
+
+  return ''
 }
