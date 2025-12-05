@@ -1,3 +1,22 @@
+/** @type {Record<string, string>} */
+export const blockFillColors = {
+  red: 'OrangeRed',
+  blue: 'DeepSkyBlue',
+  yellow: 'gold',
+  green: 'limegreen',
+  orange: 'orange',
+  pink: 'HotPink',
+  purple: 'Plum',
+  grey: 'DarkGray',
+}
+export const blockColors = ['red', 'blue', 'yellow', 'green', 'orange', 'pink', 'purple', 'grey']
+export const blockWidth = 1166
+export const blockHeight = 1322
+export const blockOverlap = 600
+export const linePaddingSide = 200
+export const linePaddingTop = 200
+export const linePaddingBottom = 400
+
 /**
  * @typedef {Object} GetMoveWeightContext
  * @property {Line[]} lines
@@ -326,7 +345,7 @@ export function findBlockById(lines, blockId) {
       if (block.id === blockId) return { line, lineIndex, block, blockIndex }
     }
   }
-  return null
+  throw new Error(`Block not found: ${blockId}`)
 }
 
 /**

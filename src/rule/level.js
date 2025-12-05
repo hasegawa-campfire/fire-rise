@@ -1,13 +1,5 @@
 import { generateId, shuffleArray } from '@/lib/utils.js'
-import { shuffleBlocks } from './block-utils.js'
-
-export const blockColors = ['red', 'blue', 'yellow', 'green', 'orange', 'pink', 'purple', 'grey']
-export const blockWidth = 1166
-export const blockHeight = 1322
-export const blockOverlap = 600
-export const linePaddingSide = 200
-export const linePaddingTop = 200
-export const linePaddingBottom = 400
+import { blockWidth, linePaddingSide, blockColors, shuffleBlocks } from './block-utils.js'
 
 const lineWidth = blockWidth + linePaddingSide * 2
 

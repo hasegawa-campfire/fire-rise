@@ -1,0 +1,191 @@
+<script type="module">
+  import { createMemo, defineComponent, reactive } from 'elii'
+  import { images } from '@/r.js'
+  import { blockWidth, blockHeight, blockOverlap, linePaddingSide, linePaddingTop } from '@/rule/block-utils.js'
+
+  export default defineComponent({
+    tag: 'play-block',
+    document: import.meta.document,
+    props: {
+      block: /** @type {Block} */ ({}),
+      lines: /** @type {Line[]} */ ([]),
+      boardScaleX: 1,
+      boardScaleY: 1,
+      selectedBlockId: '',
+      dragInfo: /** @type {{ dx:number, dy:number } | null} */ (null),
+    },
+    setup(props) {
+      let selectedBlockId = ''
+
+      const memo = createMemo(() => {
+        for (const [lineIndex, line] of props.lines.entries()) {
+          let isSelected = false
+          let prevColor = ''
+          let zIndex = 10
+          let bgZIndex = zIndex
+          let unitBgZIndex = 0
+          let isUnitHead = false
+          let delay = 0
+
+          for (const [blockIndex, block] of line.blocks.entries()) {
+            delay++
+            if (props.selectedBlockId === block.id) {
+              isSelected = true
+              zIndex += 1000
+              bgZIndex = zIndex
+              delay = 1
+            }
+            if (selectedBlockId === block.id) {
+              delay = 1
+            }
+            if (prevColor !== block.color) {
+              zIndex += 10
+              unitBgZIndex = zIndex - 9
+            }
+            isUnitHead = prevColor !== block.color
+            prevColor = block.color
+            zIndex += isUnitHead ? 1 : -1
+
+            if (block.id === props.block.id) {
+              if (isSelected) {
+                selectedBlockId = props.selectedBlockId
+              }
+
+              const topY = line.y + linePaddingTop
+              const indexOffsetY = (blockHeight - blockOverlap) * (line.size - blockIndex - 1)
+              const popupOffsetY = isSelected ? blockOverlap * 0.5 : 0
+
+              return {
+                blockIndex,
+                x: line.x + linePaddingSide,
+                dx: (isSelected && props.dragInfo?.dx) || 0,
+                y: topY + indexOffsetY - popupOffsetY,
+                dy: (isSelected && props.dragInfo?.dy) || 0,
+                isSelected,
+                isUnitHead,
+                zIndex,
+                bgZIndex,
+                unitBgZIndex,
+                delay,
+              }
+            }
+          }
+        }
+
+        throw new Error(`Block not found: ${props.block.id}`)
+      })
+
+      const onTransitionEnd = () => {
+        if (props.selectedBlockId !== selectedBlockId) {
+          selectedBlockId = ''
+        }
+      }
+
+      return {
+        props,
+        images,
+        memo,
+        blockWidth,
+        blockHeight,
+        blockOverlap,
+        linePaddingSide,
+        linePaddingTop,
+        onTransitionEnd,
+      }
+    },
+  })
+</script>
+
+<template>
+  <div
+    class="block"
+    data-class-drag="memo.isSelected && !!props.dragInfo"
+    data-style-color="props.block.color"
+    data-style-left="`calc(${memo.x * props.boardScaleX}cqw + ${memo.dx}px)`"
+    data-style-top="`calc(${memo.y * props.boardScaleY}cqh + ${memo.dy}px)`"
+    data-style-width="`${blockWidth * props.boardScaleX}cqw`"
+    data-style-height="`${blockHeight * props.boardScaleY}cqh`"
+    data-style-transition-duration="`${memo.delay * 90 + 100}ms`"
+    data-on-transitionend="onTransitionEnd"
+  >
+    <img
+      class="block-image selected ignore-events"
+      data-prop-src="images.takibi.leg.orange"
+      data-style-z-index="memo.bgZIndex"
+      data-prop-hidden="!(memo.blockIndex === 0)"
+    />
+    <img
+      class="block-image ignore-events"
+      data-prop-src="images.takibi.leg.white"
+      data-style-z-index="memo.bgZIndex"
+      data-prop-hidden="!(memo.blockIndex === 0 && memo.isSelected)"
+    />
+    <img class="block-image selected" data-prop-src="images.takibi.bg.orange" data-style-z-index="memo.bgZIndex" />
+    <img
+      class="block-image"
+      data-prop-src="images.takibi.bg.white"
+      data-style-z-index="memo.bgZIndex"
+      data-prop-hidden="!(memo.isSelected)"
+    />
+    <img
+      class="block-image ignore-events"
+      data-prop-src="images.takibi.leg.black"
+      data-style-z-index="memo.unitBgZIndex"
+      data-prop-hidden="!(memo.blockIndex === 0)"
+    />
+    <img class="block-image" data-prop-src="images.takibi.bg.black" data-style-z-index="memo.unitBgZIndex" />
+    <img class="block-image" data-prop-src="images.takibi.body[props.block.color]" data-style-z-index="memo.zIndex" />
+    <img
+      class="block-image"
+      data-prop-src="images.takibi.face"
+      data-style-z-index="memo.zIndex"
+      data-prop-hidden="!(memo.isUnitHead)"
+    />
+  </div>
+</template>
+
+<style>
+  :host {
+    display: contents;
+  }
+
+  [hidden] {
+    display: none !important;
+  }
+
+  .block {
+    position: absolute;
+    aspect-ratio: 1;
+    transition-property: left, top;
+    transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+    &.drag {
+      pointer-events: none;
+    }
+  }
+
+  .block-image {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+
+    &.selected {
+      /* animation: block-image-selected-animation 1s steps(2, jump-none) infinite; */
+    }
+
+    &.ignore-events {
+      pointer-events: none;
+    }
+  }
+
+  @keyframes block-image-selected-animation {
+    0% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+</style>

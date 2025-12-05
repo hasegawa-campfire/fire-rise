@@ -1,0 +1,189 @@
+<script type="module">
+  import { createMemo, defineComponent } from 'elii'
+  import {
+    blockFillColors,
+    blockWidth,
+    blockHeight,
+    blockOverlap,
+    linePaddingSide,
+    linePaddingTop,
+    linePaddingBottom,
+    findBlockById,
+    isAddableBlocksToLine,
+  } from '@/rule/block-utils.js'
+
+  export default defineComponent({
+    tag: 'play-line',
+    document: import.meta.document,
+    props: {
+      line: /** @type {Line} */ ({}),
+      lines: /** @type {Line[]} */ ([]),
+      boardScaleX: 1,
+      boardScaleY: 1,
+      selectedBlockId: '',
+      dragInfo: /** @type {{} | null} */ (null),
+      hoverLineId: '',
+    },
+    setup(props) {
+      const lineIndex = props.lines.findIndex((line) => line.id === props.line.id)
+
+      const blocksHeight = blockHeight * props.line.size - blockOverlap * (props.line.size - 1)
+
+      const memo = createMemo(() => {
+        const selected = props.selectedBlockId ? findBlockById(props.lines, props.selectedBlockId) : null
+        const isSelectable = !!selected && isAddableBlocksToLine(props.line, selected.line, selected.blockIndex)
+
+        const blocksOffsetY =
+          props.line.blocks.length <= 0
+            ? blocksHeight
+            : (blockHeight - blockOverlap) * (props.line.size - props.line.blocks.length)
+
+        return {
+          selectedColor: selected ? blockFillColors[selected.block.color] : '',
+          isSelectable,
+          isDroppable: isSelectable && props.hoverLineId === props.line.id && !!props.dragInfo,
+          markerY: linePaddingTop + blocksOffsetY - blockOverlap * 0.5,
+        }
+      })
+
+      return {
+        props,
+        memo,
+        linePaddingBottom,
+        lineIndex,
+        lineWidth: blockWidth + linePaddingSide * 2,
+        lineHeight: blocksHeight + linePaddingTop + linePaddingBottom,
+      }
+    },
+  })
+</script>
+
+<template>
+  <div
+    class="line"
+    data-class-selectable="memo.isSelectable"
+    data-class-droppable="memo.isDroppable"
+    data-style-left="`${props.line.x * props.boardScaleX}cqw`"
+    data-style-top="`${props.line.y * props.boardScaleY}cqh`"
+    data-style-width="`${lineWidth * props.boardScaleX}cqw`"
+    data-style-height="`${lineHeight * props.boardScaleY}cqh`"
+  >
+    <div class="line-bg"></div>
+    <div class="line-shadow"></div>
+    <div
+      class="line-bottom"
+      data-class-empty="props.line.blocks.length === 0"
+      data-class-even="lineIndex % 2 === 0"
+      data-style-height="`${linePaddingBottom * props.boardScaleY}cqh`"
+    ></div>
+    <div
+      class="selectable-marker"
+      data-style-top="`${memo.markerY * props.boardScaleY}cqh`"
+      data-style-color="memo.selectedColor"
+    >
+      <div class="selectable-marker-triangle"></div>
+      <div class="selectable-marker-top"></div>
+    </div>
+  </div>
+</template>
+
+<style>
+  :host {
+    display: contents;
+  }
+
+  .line {
+    position: absolute;
+    z-index: 0;
+  }
+
+  .line-bg {
+    position: absolute;
+    inset: 0 8px 0;
+    background-color: #0003;
+    border: 4px solid #0002;
+    border-radius: 999px 999px 0 0;
+
+    .selectable & {
+      background-image: linear-gradient(to bottom, #fff2, #fff2);
+    }
+
+    .droppable & {
+      background-image: linear-gradient(to bottom, #fff4, #fff4);
+    }
+  }
+
+  .line-shadow {
+    position: absolute;
+    inset: 16px 24px 0;
+    background-color: #0002;
+    border-radius: 999px 999px 0 0;
+  }
+
+  .line-bottom {
+    position: absolute;
+    inset: auto 4px 0;
+    border: 4px solid #5d1a00;
+    border-radius: 2px;
+    background-color: #921400;
+    background-image: linear-gradient(to bottom, #0002, #0002 50%, transparent 50%, transparent);
+    box-sizing: border-box;
+
+    &.even {
+      background-color: #bd1900;
+    }
+
+    .selectable &.empty {
+      /* box-shadow: 0 0 0 4px #fff; */
+    }
+  }
+
+  .selectable-marker {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    animation: selectable-marker-animation 1.8s steps(2, jump-none) infinite;
+    visibility: hidden;
+
+    .selectable & {
+      visibility: visible;
+    }
+  }
+
+  @keyframes selectable-marker-animation {
+    0% {
+      transform: translateY(0);
+    }
+    100% {
+      transform: translateY(4px);
+    }
+  }
+
+  .selectable-marker-triangle {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 20px;
+    height: 20px;
+    background-color: currentColor;
+    border: #444 4px solid;
+    border-radius: 0.25em;
+    box-shadow: 0 0 0 4px #fff;
+    clip-path: polygon(-49% -50%, 151% 150%, -49% 150%);
+    transform: translate(-50%, -100%) rotate(-45deg);
+  }
+
+  .selectable-marker-top {
+    position: absolute;
+    left: 0px;
+    top: -4px;
+    width: calc(20px * 1.414);
+    height: 20px;
+    background-color: currentColor;
+    border: #444 4px solid;
+    border-radius: 0.25em;
+    box-shadow: 0 0 0 4px #fff;
+    clip-path: polygon(-50% -50%, 150% -50%, 150% 4px, -50% 4px);
+    transform: translate(-50%, -50%);
+  }
+</style>

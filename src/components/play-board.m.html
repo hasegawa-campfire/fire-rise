@@ -1,13 +1,5 @@
 <script type="module">
-  import { createMemo, defineComponent, onCleanup, reactive } from 'elii'
-  import {
-    findBlockById,
-    getCompletionRate,
-    isAddableBlocksToLine,
-    isGoalState,
-    isStuckState,
-  } from '@/rule/block-utils.js'
-  import { images } from '@/r.js'
+  import { defineComponent, onCleanup, reactive } from 'elii'
   import {
     blockWidth,
     blockHeight,
@@ -15,8 +7,13 @@
     linePaddingSide,
     linePaddingTop,
     linePaddingBottom,
-  } from '@/rule/level.js'
+    findBlockById,
+    isAddableBlocksToLine,
+  } from '@/rule/block-utils.js'
+  import { images } from '@/r.js'
 
+  import './play-line.m.html'
+  import './play-block.m.html'
   import './x-bg.m.html'
 
   export default defineComponent({
@@ -29,11 +26,11 @@
     setup(props) {
       const state = reactive({
         selectedBlockId: '',
-        lastSelectedBlockId: '',
-        selectedBlockPopup: false,
         hoverLineId: '',
         dragInfo: /** @type {{ x: number, y: number, dx:number, dy:number, moving: boolean } | null} */ (null),
       })
+
+      let oldSelectedBlockId = ''
 
       const linesMinX = props.lines.reduce((min, line) => Math.min(min, line.x), Infinity)
       const linesMinY = props.lines.reduce((min, line) => Math.min(min, line.y), Infinity)
@@ -53,7 +50,6 @@
        */
       const onGlobalPointerDown = (e) => {
         if (e.defaultPrevented) return
-        if (state.selectedBlockId) state.lastSelectedBlockId = state.selectedBlockId
         state.selectedBlockId = ''
       }
 
@@ -82,101 +78,17 @@
        */
       const onGlobalPointerUp = (e) => {
         if (e.defaultPrevented) return
-        if (state.selectedBlockId) state.lastSelectedBlockId = state.selectedBlockId
-        state.selectedBlockId = ''
         state.dragInfo = null
       }
 
       addEventListener('pointerdown', onGlobalPointerDown)
       addEventListener('pointermove', onGlobalPointerMove)
       addEventListener('pointerup', onGlobalPointerUp)
-      onCleanup(() => removeEventListener('pointerdown', onGlobalPointerDown))
-      onCleanup(() => removeEventListener('pointermove', onGlobalPointerMove))
-      onCleanup(() => removeEventListener('pointerup', onGlobalPointerUp))
-
-      /**
-       * @param {Line} line
-       */
-      const isSelectableLine = (line) => {
-        const selected = findBlockById(props.lines, state.selectedBlockId)
-        return !!selected && isAddableBlocksToLine(line, selected.line, selected.blockIndex)
-      }
-
-      const blockInfos = props.lines.flatMap((line) => {
-        return line.blocks.map((block) => {
-          return createMemo(() => {
-            for (const [lineIndex, line] of props.lines.entries()) {
-              let selected = false
-              let prevColor = ''
-              let zIndex = 10
-              let bgZIndex = zIndex
-              let unitBgZIndex = 0
-              let unitHead = false
-              let delay = 0
-              for (const [blockIndex, b] of line.blocks.entries()) {
-                delay++
-                if (state.selectedBlockId === b.id) {
-                  selected = true
-                  zIndex += 100
-                  bgZIndex = zIndex
-                  delay = 1
-                }
-                if (state.lastSelectedBlockId === b.id) {
-                  delay = 1
-                }
-                if (prevColor !== b.color) {
-                  zIndex += 10
-                  unitBgZIndex = zIndex - 9
-                }
-                unitHead = prevColor !== b.color
-                prevColor = b.color
-                zIndex += unitHead ? 1 : -1
-                if (block.id === b.id) {
-                  return {
-                    line,
-                    lineIndex,
-                    block,
-                    blockIndex,
-                    selected,
-                    unitHead,
-                    zIndex,
-                    bgZIndex,
-                    unitBgZIndex,
-                    delay,
-                  }
-                }
-              }
-            }
-            throw new Error('block not found')
-          })
-        })
+      onCleanup(() => {
+        removeEventListener('pointerdown', onGlobalPointerDown)
+        removeEventListener('pointermove', onGlobalPointerMove)
+        removeEventListener('pointerup', onGlobalPointerUp)
       })
-
-      /**
-       * @param {Block} block
-       * @param {number} blockIndex
-       * @param {Line} line
-       * @param {PointerEvent} e
-       */
-      const onBlockPointerDown = (block, blockIndex, line, e) => {
-        if (e.defaultPrevented) return
-        e.preventDefault()
-
-        // ブロックに繋がる最も根本の同色ブロックを取得する
-        for (let i = blockIndex - 1; i >= 0; i--) {
-          const b = line.blocks.at(i)
-          if (b?.color === block.color) block = b
-          else break
-        }
-
-        // ブロックを選択中にする
-        if (state.selectedBlockId !== block.id) {
-          state.selectedBlockId = block.id
-          state.hoverLineId = line.id
-          state.selectedBlockPopup = false
-        }
-        state.dragInfo = { x: e.clientX, y: e.clientY, dx: 0, dy: 0, moving: false }
-      }
 
       /**
        * @param {Line} line
@@ -188,7 +100,6 @@
 
         // 選択中のブロックを移動する
         moveSelectedBlockToLine(line)
-        if (state.selectedBlockId) state.lastSelectedBlockId = state.selectedBlockId
         state.selectedBlockId = ''
       }
 
@@ -197,7 +108,21 @@
        * @param {PointerEvent} e
        */
       const onLinePointerEnter = (line, e) => {
+        if (e.defaultPrevented) return
+        e.preventDefault()
+
         state.hoverLineId = line.id
+      }
+
+      /**
+       * @param {Line} line
+       * @param {PointerEvent} e
+       */
+      const onLinePointerLeave = (line, e) => {
+        if (e.defaultPrevented) return
+        e.preventDefault()
+
+        state.hoverLineId = ''
       }
 
       /**
@@ -210,21 +135,15 @@
 
         if (state.dragInfo?.moving === false) {
           // 選択してその場で放した＝ただのクリック
-          if (!state.selectedBlockPopup) {
-            state.selectedBlockPopup = true
-          } else {
-            state.selectedBlockPopup = false
-            if (state.selectedBlockId) state.lastSelectedBlockId = state.selectedBlockId
+          // 選択中のブロックの再クリックなら選択を解除する
+          if (oldSelectedBlockId === state.selectedBlockId) {
             state.selectedBlockId = ''
           }
         } else {
           // 選択中のブロックがあれば移動する
           const moved = moveSelectedBlockToLine(line)
           if (moved) {
-            if (state.selectedBlockId) state.lastSelectedBlockId = state.selectedBlockId
             state.selectedBlockId = ''
-          } else {
-            state.selectedBlockPopup = true
           }
         }
 
@@ -232,11 +151,62 @@
       }
 
       /**
+       * @param {Block} block
+       * @param {PointerEvent} e
+       */
+      const onBlockPointerDown = (block, e) => {
+        if (e.defaultPrevented) return
+        e.preventDefault()
+
+        const { line, blockIndex } = findBlockById(props.lines, block.id)
+
+        // ブロックに繋がる最も根本の同色ブロックを取得する
+        for (let i = blockIndex - 1; i >= 0; i--) {
+          const b = line.blocks.at(i)
+          if (b?.color === block.color) block = b
+          else break
+        }
+
+        // ブロックを選択中にする
+        oldSelectedBlockId = state.selectedBlockId
+        state.selectedBlockId = block.id
+        state.hoverLineId = line.id
+        state.dragInfo = { x: e.clientX, y: e.clientY, dx: 0, dy: 0, moving: false }
+      }
+
+      /**
+       * @param {Block} block
+       * @param {PointerEvent} e
+       */
+      const onBlockPointerEnter = (block, e) => {
+        const { line } = findBlockById(props.lines, block.id)
+        onLinePointerEnter(line, e)
+      }
+
+      /**
+       * @param {Block} block
+       * @param {PointerEvent} e
+       */
+      const onBlockPointerLeave = (block, e) => {
+        const { line } = findBlockById(props.lines, block.id)
+        onLinePointerLeave(line, e)
+      }
+
+      /**
+       * @param {Block} block
+       * @param {PointerEvent} e
+       */
+      const onBlockPointerUp = (block, e) => {
+        const { line } = findBlockById(props.lines, block.id)
+        onLinePointerUp(line, e)
+      }
+
+      /**
        * @param {Line} line
        */
       const moveSelectedBlockToLine = (line) => {
         // 選択中のブロックがそこへ移動可能なら移動する
-        const selected = findBlockById(props.lines, state.selectedBlockId)
+        const selected = state.selectedBlockId ? findBlockById(props.lines, state.selectedBlockId) : null
 
         if (selected && isAddableBlocksToLine(line, selected.line, selected.blockIndex)) {
           const selectedBlocks = selected.line.blocks.slice(selected.blockIndex)
@@ -255,22 +225,24 @@
         props,
         images,
         state,
+        blocks: props.lines.flatMap((line) => line.blocks),
         blockWidth,
         blockHeight,
         blockOverlap,
         linePaddingSide,
         linePaddingTop,
-        linePaddingBottom,
         boardWidth,
         boardHeight,
         boardScaleX,
         boardScaleY,
-        blockInfos,
-        onBlockPointerDown,
         onLinePointerDown,
         onLinePointerUp,
         onLinePointerEnter,
-        isSelectableLine,
+        onLinePointerLeave,
+        onBlockPointerDown,
+        onBlockPointerUp,
+        onBlockPointerEnter,
+        onBlockPointerLeave,
       }
     },
   })
@@ -284,78 +256,35 @@
       data-style-background-size="`${(blockWidth + linePaddingSide * 2) * boardScaleX * 2}cqw ${(blockHeight - blockOverlap) * boardScaleY * 2}cqh`"
     ></div>
 
-    <template data-for="line, lineIndex in props.lines" data-key="line.id">
-      <div
-        class="line"
-        data-class-selectable="isSelectableLine(line)"
-        data-class-droppable="state.dragInfo && state.hoverLineId === line.id"
-        data-style-left="`${line.x * boardScaleX}cqw`"
-        data-style-top="`${line.y * boardScaleY}cqh`"
-        data-style-width="`${(blockWidth + linePaddingSide * 2) * boardScaleX}cqw`"
-        data-style-height="`${(blockHeight * line.size - blockOverlap * (line.size - 1) + linePaddingTop + linePaddingBottom) * boardScaleY}cqh`"
+    <template data-for="line in props.lines" data-key="line.id">
+      <play-line
+        data-prop-line="line"
+        data-prop-lines="props.lines"
+        data-prop-board-scale-x="boardScaleX"
+        data-prop-board-scale-y="boardScaleY"
+        data-prop-selected-block-id="state.selectedBlockId"
+        data-prop-drag-info="state.dragInfo"
+        data-prop-hover-line-id="state.hoverLineId"
         data-on-pointerdown="(e) => onLinePointerDown(line, e)"
         data-on-pointerup="(e) => onLinePointerUp(line, e)"
         data-on-pointerenter="(e) => onLinePointerEnter(line, e)"
-      >
-        <div class="line-bg"></div>
-        <div class="line-shadow"></div>
-        <div
-          class="line-bottom"
-          data-class-even="lineIndex % 2 === 0"
-          data-style-height="`${linePaddingBottom * boardScaleY}cqh`"
-        ></div>
-      </div>
+        data-on-pointerleave="(e) => onLinePointerLeave(line, e)"
+      ></play-line>
     </template>
 
-    <template data-for="info in blockInfos" data-key="info.block.id">
-      <div
-        class="block"
-        data-class-drag="info.selected && !!state.dragInfo"
-        data-style-color="info.block.color"
-        data-style-left="`calc(${(info.line.x + linePaddingSide) * boardScaleX}cqw + ${info.selected && state.dragInfo?.dx || 0}px)`"
-        data-style-top="`calc(${(info.line.y + linePaddingTop + (blockHeight - blockOverlap) * (info.line.size - info.blockIndex - 1) - (info.selected && state.selectedBlockPopup ? blockOverlap * 0.5 : 0)) * boardScaleY}cqh + ${info.selected && state.dragInfo?.dy || 0}px)`"
-        data-style-width="`${blockWidth * boardScaleX}cqw`"
-        data-style-height="`${blockHeight * boardScaleY}cqh`"
-        data-style-transition-duration="`${info.delay * 90 + 100}ms`"
-        data-on-pointerdown="(e) => onBlockPointerDown(info.block, info.blockIndex, info.line, e)"
-        data-on-pointerup="(e) => onLinePointerUp(info.line, e)"
-        data-on-pointerenter="(e) => onLinePointerEnter(info.line, e)"
-      >
-        <img
-          class="block-image"
-          data-prop-src="images.takibi.leg.white"
-          data-style-z-index="info.bgZIndex"
-          data-prop-hidden="info.blockIndex > 0"
-        />
-        <img
-          class="block-image selected"
-          data-prop-src="images.takibi.leg.orange"
-          data-style-z-index="info.bgZIndex"
-          data-prop-hidden="info.blockIndex > 0 || info.selected || !state.selectedBlockId"
-        />
-        <img class="block-image" data-prop-src="images.takibi.bg.white" data-style-z-index="info.bgZIndex" />
-        <img
-          class="block-image selected"
-          data-prop-src="images.takibi.bg.orange"
-          data-style-z-index="info.bgZIndex"
-          data-prop-hidden="info.selected || !state.selectedBlockId"
-        />
-        <img
-          class="block-image"
-          data-prop-src="images.takibi.leg.black"
-          data-style-z-index="info.unitBgZIndex"
-          data-prop-hidden="info.blockIndex > 0"
-        />
-        <img class="block-image" data-prop-src="images.takibi.bg.black" data-style-z-index="info.unitBgZIndex" />
-        <img
-          class="block-image"
-          data-prop-src="images.takibi.body[info.block.color]"
-          data-style-z-index="info.zIndex"
-        />
-        <template data-if="info.unitHead">
-          <img class="block-image" data-prop-src="images.takibi.face" data-style-z-index="info.zIndex" />
-        </template>
-      </div>
+    <template data-for="block in blocks" data-key="block.id">
+      <play-block
+        data-prop-block="block"
+        data-prop-lines="props.lines"
+        data-prop-board-scale-x="boardScaleX"
+        data-prop-board-scale-y="boardScaleY"
+        data-prop-selected-block-id="state.selectedBlockId"
+        data-prop-drag-info="state.dragInfo"
+        data-on-pointerdown="(e) => onBlockPointerDown(block, e)"
+        data-on-pointerup="(e) => onBlockPointerUp(block, e)"
+        data-on-pointerenter="(e) => onBlockPointerEnter(block, e)"
+        data-on-pointerleave="(e) => onBlockPointerLeave(block, e)"
+      ></play-block>
     </template>
   </div>
 </template>
@@ -363,10 +292,6 @@
 <style>
   :host {
     display: contents;
-  }
-
-  [hidden] {
-    display: none !important;
   }
 
   .board {
@@ -386,79 +311,5 @@
     opacity: 0.06;
     z-index: 0;
     pointer-events: none;
-  }
-
-  .line {
-    position: absolute;
-    z-index: 0;
-  }
-
-  .line-bg {
-    position: absolute;
-    inset: 0 8px 0;
-    background-color: #0003;
-    border: 4px solid #0002;
-    border-radius: 999px 999px 0 0;
-
-    .selectable & {
-      /* background-color: #fff2; */
-    }
-
-    .selectable.droppable & {
-      background-color: #fff6;
-    }
-  }
-
-  .line-shadow {
-    position: absolute;
-    inset: 16px 24px 0;
-    background-color: #0002;
-    border-radius: 999px 999px 0 0;
-  }
-
-  .line-bottom {
-    position: absolute;
-    inset: auto 4px 0;
-    border: 4px solid #5d1a00;
-    border-radius: 2px;
-    background-color: #921400;
-    background-image: linear-gradient(to bottom, #0002, #0002 50%, transparent 50%, transparent);
-    box-sizing: border-box;
-
-    &.even {
-      background-color: #bd1900;
-    }
-  }
-
-  .block {
-    position: absolute;
-    aspect-ratio: 1;
-    transition-property: left, top;
-    transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
-
-    &.drag {
-      pointer-events: none;
-    }
-  }
-
-  .block-image {
-    position: absolute;
-    left: 0;
-    width: 100%;
-    top: 50%;
-    transform: translateY(-50%);
-
-    &.selected {
-      /* animation: block-image-selected-animation 1s steps(2, jump-none) infinite; */
-    }
-  }
-
-  @keyframes block-image-selected-animation {
-    0% {
-      opacity: 1;
-    }
-    100% {
-      opacity: 0;
-    }
   }
 </style>
