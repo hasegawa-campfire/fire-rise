@@ -1,19 +1,12 @@
 import { reactive } from 'elii'
-import {
-  createHistoryState,
-  createLocalStorageState,
-  createSessionStorageState,
-  pushHistoryState,
-} from '@/lib/state.js'
-import { stickyActivation } from '@/lib/user-activation.js'
-import { startViewTransition } from '@/lib/view-transition.js'
+import { createLocalStorageState, createSessionStorageState } from '@/lib/state.js'
 import { loadBin } from '@/lib/bin.js'
 import { Audio, setCategoryVolume, setMasterVolume } from '@/lib/audio.js'
+import { createRouteState } from './lib/route-state.js'
 
 const storeKey = 'fire-rise'
 
 export const runtime = reactive({
-  ready: stickyActivation,
   result: /** @type { 'success' | 'failure' | null} */ (null),
 })
 
@@ -27,29 +20,11 @@ export const prefs = createLocalStorageState(storeKey, {
 
 export const session = createSessionStorageState(storeKey, {})
 
-export const route = createHistoryState(storeKey, {
+export const route = createRouteState(storeKey, {
   page: /** @type {'title' | 'play'} */ ('title'),
   levelId: 'tutorial1',
   focusLevelId: /** @type {string | null} */ (null),
 })
-
-/**
- * @param {Partial<typeof route>} newState
- */
-export function pushRoute(newState) {
-  for (const audio of Object.values(bgm)) {
-    if (audio.playing) {
-      audio.setVolume(0, 0.5)
-      audio.stop(0.5)
-    }
-  }
-
-  const { finished } = startViewTransition(() => {
-    document.scrollingElement?.scrollTo(0, 0)
-    runtime.ready = finished
-    pushHistoryState(route, newState)
-  })
-}
 
 export const images = {
   takibi: {

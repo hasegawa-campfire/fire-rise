@@ -1,12 +1,23 @@
 <script type="module">
-  import { defineComponent, reactive } from 'elii'
+  import { createEffect, defineComponent, reactive } from 'elii'
   import { hasBeenActive, stickyActivation } from '@/lib/user-activation.js'
-  import { route, images } from '@/r.js'
+  import { route, images, bgm } from '@/r.js'
 
   import './title-root.m.html'
   import './play-root.m.html'
   import './x-text.m.html'
   import './x-overlay.m.html'
+
+  // ページ遷移を検知してBGMを停止する
+  createEffect(() => {
+    void route.state.page // 依存関係を明示
+    for (const audio of Object.values(bgm)) {
+      if (audio.playing) {
+        audio.setVolume(0, 0.5)
+        audio.stop(0.5)
+      }
+    }
+  })
 
   export default defineComponent({
     tag: 'app-root',
@@ -38,10 +49,10 @@
     data-style--images-half-tone="`url('${images.halfTone}')`"
     data-style--images-board-bg="`url('${images.boardBg}')`"
   >
-    <template data-if="route.page === 'title'">
+    <template data-if="route.state.page === 'title'">
       <title-root></title-root>
     </template>
-    <template data-if="route.page === 'play'">
+    <template data-if="route.state.page === 'play'">
       <play-root></play-root>
     </template>
 

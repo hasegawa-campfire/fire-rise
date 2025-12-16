@@ -1,7 +1,7 @@
 <script type="module">
   import { defineComponent, onCleanup, reactive, toRaw } from 'elii'
   import { cloneBoard, getCompletionRate, isGoalState, isStuckState } from '@/rule/board-utils.js'
-  import { route, pushRoute, runtime, images, prefs, bgm, se } from '@/r.js'
+  import { route, runtime, images, prefs, bgm, se } from '@/r.js'
   import { getNextLevel, levels } from '@/rule/level.js'
 
   import './x-header.m.html'
@@ -26,7 +26,7 @@
         failureTimeoutId = 0
       })
 
-      const level = levels.find((level) => level.id === route.levelId)
+      const level = levels.find((level) => level.id === route.state.levelId)
       if (!level) throw Error('level not found')
 
       if (!prefs.levelStats[level.id]) {
@@ -54,7 +54,7 @@
         refPlayBoard: /** @type {PlayBoard | null} */ (null),
       })
 
-      runtime.ready.then(() => {
+      route.onReady(() => {
         bgm.play.play(0.2)
 
         if (level.helpPageId && !prefs.seenHelps[level.helpPageId]) {
@@ -73,7 +73,7 @@
           }
         }
 
-        pushRoute({ page: 'title', focusLevelId: levelId })
+        route.pushState({ page: 'title', focusLevelId: levelId })
       }
 
       const confirmRestart = () => {

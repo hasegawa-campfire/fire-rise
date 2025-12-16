@@ -12,7 +12,7 @@
     isMovableBlock,
     moveBlock,
   } from '@/rule/board-utils.js'
-  import { images, runtime, se } from '@/r.js'
+  import { images, route, se } from '@/r.js'
 
   import './play-line.m.html'
   import './play-block.m.html'
@@ -34,7 +34,7 @@
         refBoard: /** @type {Element | null} */ (null),
       })
 
-      runtime.ready.then(() => {
+      route.onReady(() => {
         state.isReady = true
       })
 

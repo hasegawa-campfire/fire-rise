@@ -1,6 +1,6 @@
 <script type="module">
   import { createMemo, defineComponent, reactive } from 'elii'
-  import { pushRoute, route, runtime, prefs, bgm, se } from '@/r.js'
+  import { route, prefs, bgm, se } from '@/r.js'
   import { levels } from '@/rule/level.js'
 
   import './x-header.m.html'
@@ -25,7 +25,7 @@
         }
       })
 
-      runtime.ready.then(() => {
+      route.onReady(() => {
         bgm.title.play(0.2)
         state.isReady = true
       })
@@ -35,7 +35,7 @@
        */
       const goToPlay = (levelId) => {
         if (levels.find((level) => level.id === levelId)?.isUnlocked()) {
-          pushRoute({ page: 'play', levelId })
+          route.pushState({ page: 'play', levelId })
           se.start.play()
         }
       }
@@ -44,8 +44,8 @@
         if (!prefs.seenCompleted && memo.isCompleted) {
           prefs.seenCompleted = true
           window.scroll({ top: 0, behavior: 'smooth' })
-        } else if (route.focusLevelId) {
-          state.refStages[route.focusLevelId]?.scrollIntoView({ block: 'center' })
+        } else if (route.state.focusLevelId) {
+          state.refStages[route.state.focusLevelId]?.scrollIntoView({ block: 'center' })
         }
       })
 
