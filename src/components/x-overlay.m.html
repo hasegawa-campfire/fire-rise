@@ -1,0 +1,41 @@
+<script type="module">
+  import { defineComponent } from 'elii'
+
+  export default defineComponent({
+    tag: 'x-overlay',
+    document: import.meta.document,
+    setup() {
+      return {}
+    },
+  })
+</script>
+
+<template>
+  <div class="overlay">
+    <div class="content">
+      <slot></slot>
+    </div>
+  </div>
+</template>
+
+<style>
+  :host {
+    display: block;
+    position: absolute;
+    inset: 0;
+    z-index: 999999;
+    container-type: size;
+  }
+
+  .overlay {
+    position: fixed;
+    inset: 0 0 auto;
+    margin: 0 auto;
+    width: 100cqw;
+    height: 100cqh;
+    max-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+</style>

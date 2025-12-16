@@ -1,12 +1,12 @@
 {
-  "name": "fire-tower",
+  "name": "fire-rise",
   "version": "1.0.0",
   "description": "",
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "serve": "http-server -p 3000 src",
-    "serve:ssl": "http-server -p 3000 src -S -C ./localhost+3.pem -K ./localhost+3-key.pem",
+    "serve": "http-server -p 3001 src",
+    "serve:ssl": "http-server -p 3001 src -S -C ./localhost+3.pem -K ./localhost+3-key.pem",
     "updates": "ncu -c 3 -i"
   },
   "author": "",

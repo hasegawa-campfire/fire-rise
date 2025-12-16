@@ -1,89 +1,129 @@
 <script type="module">
-  import { createMemo, defineComponent, reactive } from 'elii'
-  import { images } from '@/r.js'
-  import { blockWidth, blockHeight, blockOverlap, linePaddingSide, linePaddingTop } from '@/rule/block-utils.js'
+  import { createMemo, defineComponent, onCleanup, reactive } from 'elii'
+  import { images, runtime, se } from '@/r.js'
+  import { blockWidth, blockHeight, blockOverlap, linePaddingSide, linePaddingTop } from '@/rule/board-utils.js'
 
   export default defineComponent({
     tag: 'play-block',
     document: import.meta.document,
     props: {
-      block: /** @type {Block} */ ({}),
-      lines: /** @type {Line[]} */ ([]),
+      blockId: '',
+      board: /** @type {Board} */ ({ lines: {}, blocks: {} }),
       boardScaleX: 1,
       boardScaleY: 1,
+      isReady: false,
       selectedBlockId: '',
       dragInfo: /** @type {{ dx:number, dy:number } | null} */ (null),
     },
     setup(props) {
       let selectedBlockId = ''
 
+      const state = reactive({
+        isWink: false,
+      })
+
+      const animeIntervalId = window.setInterval(() => {
+        // 2秒に1回誰かが目を閉じるくらいの確率
+        const blockCount = Object.keys(props.board.blocks).length
+        if (Math.random() < 0.5 / blockCount) {
+          state.isWink = true
+        } else {
+          state.isWink = false
+        }
+      }, 1000)
+
+      onCleanup(() => {
+        window.clearInterval(animeIntervalId)
+      })
+
       const memo = createMemo(() => {
-        for (const [lineIndex, line] of props.lines.entries()) {
-          let isSelected = false
-          let prevColor = ''
-          let zIndex = 10
-          let bgZIndex = zIndex
-          let unitBgZIndex = 0
-          let isUnitHead = false
-          let delay = 0
+        let isSelected = false
+        let prevColor = ''
+        let zIndex = 10
+        let bgZIndex = zIndex
+        let unitBgZIndex = 0
+        let isUnitHead = false
+        let delay = 0
 
-          for (const [blockIndex, block] of line.blocks.entries()) {
-            delay++
-            if (props.selectedBlockId === block.id) {
-              isSelected = true
-              zIndex += 1000
-              bgZIndex = zIndex
-              delay = 1
+        const line = props.board.lines[props.board.blocks[props.blockId].lineId]
+
+        for (const blockId of line.blockIds) {
+          const block = props.board.blocks[blockId]
+
+          delay++
+          if (props.selectedBlockId === block.id) {
+            isSelected = true
+            zIndex += 1000
+            bgZIndex = zIndex
+            delay = 1
+          }
+          if (selectedBlockId === block.id) {
+            delay = 1
+          }
+          if (prevColor !== block.color) {
+            zIndex += 10
+            unitBgZIndex = zIndex - 9
+          }
+          isUnitHead = prevColor !== block.color
+          prevColor = block.color
+          zIndex += isUnitHead ? 1 : -1
+
+          if (block.id === props.blockId) {
+            if (isSelected) {
+              selectedBlockId = props.selectedBlockId
             }
-            if (selectedBlockId === block.id) {
-              delay = 1
-            }
-            if (prevColor !== block.color) {
-              zIndex += 10
-              unitBgZIndex = zIndex - 9
-            }
-            isUnitHead = prevColor !== block.color
-            prevColor = block.color
-            zIndex += isUnitHead ? 1 : -1
 
-            if (block.id === props.block.id) {
-              if (isSelected) {
-                selectedBlockId = props.selectedBlockId
-              }
+            const topY = line.y + linePaddingTop
+            const indexOffsetY = (blockHeight - blockOverlap) * (line.size - block.index - 1)
+            const popupOffsetY = !props.isReady ? blockOverlap * 1 : isSelected ? blockOverlap * -0.5 : 0
 
-              const topY = line.y + linePaddingTop
-              const indexOffsetY = (blockHeight - blockOverlap) * (line.size - blockIndex - 1)
-              const popupOffsetY = isSelected ? blockOverlap * 0.5 : 0
-
-              return {
-                blockIndex,
-                x: line.x + linePaddingSide,
-                dx: (isSelected && props.dragInfo?.dx) || 0,
-                y: topY + indexOffsetY - popupOffsetY,
-                dy: (isSelected && props.dragInfo?.dy) || 0,
-                isSelected,
-                isUnitHead,
-                zIndex,
-                bgZIndex,
-                unitBgZIndex,
-                delay,
-              }
+            return {
+              index: block.index,
+              color: block.color,
+              isBottom: block.index === 0,
+              x: line.x + linePaddingSide,
+              dx: (isSelected && props.dragInfo?.dx) || 0,
+              y: topY + indexOffsetY + popupOffsetY,
+              dy: (isSelected && props.dragInfo?.dy) || 0,
+              isSelected,
+              isSuccess: runtime.result === 'success',
+              isFailure: runtime.result === 'failure',
+              isUnitHead,
+              zIndex,
+              bgZIndex,
+              unitBgZIndex,
+              delay: delay * 90 + 100,
             }
           }
         }
 
-        throw new Error(`Block not found: ${props.block.id}`)
+        throw new Error(`Block not found: ${props.blockId}`)
       })
 
-      const onTransitionEnd = () => {
+      /**
+       * @param {TransitionEvent} e
+       */
+      const onTransitionEnd = (e) => {
+        if (e.target !== e.currentTarget) return
         if (props.selectedBlockId !== selectedBlockId) {
           selectedBlockId = ''
         }
       }
 
+      /**
+       * @param {TransitionEvent} e
+       */
+      const onTransitionStart = (e) => {
+        if (e.target !== e.currentTarget) return
+        if (memo.isSelected) return
+        se.move.play()
+      }
+
       return {
-        props,
         images,
+        runtime,
+        props,
+        state,
         memo,
         blockWidth,
         blockHeight,
@@ -91,6 +131,7 @@
         linePaddingSide,
         linePaddingTop,
         onTransitionEnd,
+        onTransitionStart,
       }
     },
   })
@@ -99,48 +140,60 @@
 <template>
   <div
     class="block"
+    data-class-ready="props.isReady"
     data-class-drag="memo.isSelected && !!props.dragInfo"
-    data-style-color="props.block.color"
+    data-style-color="memo.color"
     data-style-left="`calc(${memo.x * props.boardScaleX}cqw + ${memo.dx}px)`"
     data-style-top="`calc(${memo.y * props.boardScaleY}cqh + ${memo.dy}px)`"
     data-style-width="`${blockWidth * props.boardScaleX}cqw`"
     data-style-height="`${blockHeight * props.boardScaleY}cqh`"
-    data-style-transition-duration="`${memo.delay * 90 + 100}ms`"
+    data-style-transition-duration="`${memo.delay}ms`"
+    data-on-transitionstart="onTransitionStart"
     data-on-transitionend="onTransitionEnd"
   >
-    <img
-      class="block-image selected ignore-events"
-      data-prop-src="images.takibi.leg.orange"
-      data-style-z-index="memo.bgZIndex"
-      data-prop-hidden="!(memo.blockIndex === 0)"
-    />
-    <img
-      class="block-image ignore-events"
-      data-prop-src="images.takibi.leg.white"
-      data-style-z-index="memo.bgZIndex"
-      data-prop-hidden="!(memo.blockIndex === 0 && memo.isSelected)"
-    />
-    <img class="block-image selected" data-prop-src="images.takibi.bg.orange" data-style-z-index="memo.bgZIndex" />
+    <div class="block-image-group" data-style-z-index="memo.bgZIndex">
+      <img
+        class="block-image selected ignore-events"
+        data-prop-src="images.takibi.leg.orange"
+        data-prop-hidden="!(memo.isBottom)"
+      />
+      <img
+        class="block-image ignore-events"
+        data-prop-src="images.takibi.leg.white"
+        data-prop-hidden="!(memo.isBottom && (memo.isSelected || memo.isSuccess))"
+      />
+      <img class="block-image selected" data-prop-src="images.takibi.bg.orange" />
+      <img
+        class="block-image"
+        data-prop-src="images.takibi.bg.white"
+        data-prop-hidden="!(memo.isSelected || memo.isSuccess)"
+      />
+    </div>
+    <div class="block-image-group" data-style-z-index="memo.unitBgZIndex">
+      <img
+        class="block-image ignore-events"
+        data-prop-src="images.takibi.leg.black"
+        data-prop-hidden="!(memo.isBottom)"
+      />
+      <img class="block-image" data-prop-src="images.takibi.bg.black" />
+    </div>
     <img
       class="block-image"
-      data-prop-src="images.takibi.bg.white"
-      data-style-z-index="memo.bgZIndex"
-      data-prop-hidden="!(memo.isSelected)"
-    />
-    <img
-      class="block-image ignore-events"
-      data-prop-src="images.takibi.leg.black"
-      data-style-z-index="memo.unitBgZIndex"
-      data-prop-hidden="!(memo.blockIndex === 0)"
-    />
-    <img class="block-image" data-prop-src="images.takibi.bg.black" data-style-z-index="memo.unitBgZIndex" />
-    <img class="block-image" data-prop-src="images.takibi.body[props.block.color]" data-style-z-index="memo.zIndex" />
-    <img
-      class="block-image"
-      data-prop-src="images.takibi.face"
+      data-class-flash="memo.isSuccess"
+      data-prop-src="images.takibi.body[memo.color]"
+      data-style-animation-delay="`${(memo.index % 2) * 0.2}s`"
       data-style-z-index="memo.zIndex"
-      data-prop-hidden="!(memo.isUnitHead)"
     />
+    <div class="block-image-group" data-style-z-index="memo.zIndex" data-prop-hidden="!(memo.isUnitHead)">
+      <img class="block-image face" data-prop-src="images.takibi.face.default" data-class-visible="memo.isSelected" />
+      <img
+        class="block-image face"
+        data-prop-src="images.takibi.face.success"
+        data-class-visible="runtime.result === 'success'"
+      />
+      <img class="block-image face" data-prop-src="images.takibi.face.failure" data-class-visible="state.isWink" />
+      <img class="block-image face visible" data-prop-src="images.takibi.face[memo.color]" />
+    </div>
   </div>
 </template>
 
@@ -156,12 +209,24 @@
   .block {
     position: absolute;
     aspect-ratio: 1;
-    transition-property: left, top;
+    transition-property: left, top, opacity;
     transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
+    visibility: visible;
+    cursor: pointer;
+    touch-action: none;
 
     &.drag {
       pointer-events: none;
     }
+
+    &:not(.ready) {
+      visibility: hidden;
+    }
+  }
+
+  .block-image-group {
+    position: absolute;
+    inset: 0;
   }
 
   .block-image {
@@ -170,6 +235,19 @@
     width: 100%;
     top: 50%;
     transform: translateY(-50%);
+    opacity: 0;
+    transition-property: opacity;
+    transition-timing-function: ease-out;
+    transition-duration: 0.3s;
+    will-change: opacity;
+
+    .ready & {
+      opacity: 1;
+    }
+
+    &.flash {
+      animation: flash 0.4s steps(2, jump-none) infinite;
+    }
 
     &.selected {
       /* animation: block-image-selected-animation 1s steps(2, jump-none) infinite; */
@@ -177,6 +255,11 @@
 
     &.ignore-events {
       pointer-events: none;
+    }
+
+    &.face:not(.visible),
+    &.face.visible ~ .visible {
+      display: none;
     }
   }
 
@@ -186,6 +269,15 @@
     }
     100% {
       opacity: 0;
+    }
+  }
+
+  @keyframes flash {
+    0% {
+      filter: brightness(0.9) hue-rotate(-10deg) contrast(1.1);
+    }
+    100% {
+      filter: brightness(1) hue-rotate(0deg) contrast(1);
     }
   }
 </style>

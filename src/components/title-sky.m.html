@@ -1,0 +1,238 @@
+<script type="module">
+  import { defineComponent } from 'elii'
+  import { shuffleArray, mapRange } from '@/lib/utils.js'
+  import { blockColors, blockFillColors } from '@/rule/board-utils.js'
+
+  const starTimes = Array.from({ length: 30 }).map((_, i) => i)
+  const meteorTimes = Array.from({ length: blockColors.length }).map((_, i) => i)
+
+  export default defineComponent({
+    tag: 'title-sky',
+    document: import.meta.document,
+    setup() {
+      const starShuffles = {
+        delay: shuffleArray(starTimes),
+        y: shuffleArray(starTimes),
+      }
+
+      const stars = starTimes.map((i) => {
+        return {
+          size: mapRange(i / starTimes.length, 2, 4),
+          duration: mapRange(i / starTimes.length, 20, 10),
+          delay: starShuffles.delay[i] / starTimes.length,
+          y: (starShuffles.y[i] / starTimes.length) * 1.4,
+          opacity: mapRange(i / starTimes.length, 0.6, 0.4),
+        }
+      })
+
+      /**
+       * @param {{y:number}} star
+       * @param {AnimationEvent} e
+       */
+      const onStarIteration = (star, e) => {
+        if (e.animationName !== 'star-move-x') return
+        star.y = Math.random() * 1.4
+      }
+
+      const meteorShuffles = {
+        delay: shuffleArray(meteorTimes),
+        x: shuffleArray(meteorTimes),
+        color: shuffleArray(blockColors),
+      }
+
+      const meteors = meteorTimes.map((i) => {
+        return {
+          size: mapRange(i / meteorTimes.length, 20, 40),
+          duration: mapRange(i / meteorTimes.length, 6, 3),
+          delay: meteorShuffles.delay[i] / meteorTimes.length,
+          x: (meteorShuffles.x[i] / meteorTimes.length) * 1.4 + 0.2,
+          vx: mapRange(Math.random(), -0.8, -0.6),
+          color: blockFillColors[meteorShuffles.color[i]],
+        }
+      })
+
+      /**
+       * @param {{x:number, vx:number}} meteor
+       * @param {AnimationEvent} e
+       */
+      const onMeteorIteration = (meteor, e) => {
+        if (e.animationName !== 'meteor-rise') return
+        meteor.x = Math.random() * 1.4 + 0.2
+        meteor.vx = mapRange(Math.random(), -0.8, -0.6)
+      }
+
+      return {
+        stars,
+        meteors,
+        onStarIteration,
+        onMeteorIteration,
+      }
+    },
+  })
+</script>
+
+<template>
+  <div class="bg"></div>
+
+  <div class="stars">
+    <template data-for="star in stars" data-key="star">
+      <div
+        class="star"
+        data-style-width="`${star.size}px`"
+        data-style-height="`${star.size}px`"
+        data-style-top="`${star.y * 100}%`"
+        data-style-opacity="star.opacity"
+        data-style-animation-duration="`${star.duration}s`"
+        data-style-animation-delay="`${star.delay * -star.duration}s`"
+        data-on-animationiteration="(e) => onStarIteration(star, e)"
+      >
+        <div class="star-image"></div>
+      </div>
+    </template>
+  </div>
+
+  <div class="meteors">
+    <template data-for="meteor in meteors" data-key="meteor">
+      <div
+        class="meteor"
+        data-style-width="`${meteor.size}px`"
+        data-style-height="`${meteor.size}px`"
+        data-style-left="`${meteor.x * 100}%`"
+        data-style--vx="`${meteor.vx * 100}cqw`"
+        data-style-animation-duration="`${meteor.duration}s`"
+        data-style-animation-delay="`${meteor.delay * -meteor.duration}s`"
+        data-on-animationiteration="(e) => onStarIteration(meteor, e)"
+      >
+        <div
+          class="meteor-image"
+          data-style-animation-duration="`2s, ${meteor.duration * 0.2}s`"
+          data-style-color="meteor.color"
+        ></div>
+      </div>
+    </template>
+  </div>
+</template>
+
+<style>
+  :host {
+    display: block;
+    position: relative;
+    height: calc(300px + 30cqw);
+    overflow: hidden;
+    z-index: 0;
+  }
+
+  .bg {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: radial-gradient(farthest-side at center top, #012 0%, #0a2342 50%, #283e51 85%, #4b79a1 100%);
+    background-size: 400% 100%;
+    background-position: center top;
+  }
+
+  .stars,
+  .meteors {
+    position: absolute;
+    inset: 0;
+    container-type: size;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .star {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 10px;
+    height: 10px;
+    animation: star-move-x 1s linear infinite;
+    will-change: transform, top;
+  }
+
+  @keyframes star-move-x {
+    0% {
+      transform: translate(-100%, 0);
+    }
+    100% {
+      transform: translate(calc(100cqw + 100%), 0);
+    }
+  }
+
+  .star-image {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background-color: #fff;
+    animation: star-move-y 0.3s infinite;
+    animation-duration: inherit;
+    animation-delay: inherit;
+  }
+
+  @keyframes star-move-y {
+    0% {
+      transform: translate(0, 0);
+      animation-timing-function: ease-out;
+    }
+    50% {
+      transform: translate(0, 30px);
+      animation-timing-function: ease-in;
+    }
+    100% {
+      transform: translate(0, 0);
+    }
+  }
+
+  .meteor {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 10px;
+    height: 10px;
+    animation: meteor-fall 1s linear infinite;
+    will-change: transform, left;
+  }
+
+  @keyframes meteor-fall {
+    0% {
+      transform: translate(calc(-50%), calc(0cqh - 100%));
+      opacity: 1;
+    }
+    66.7% {
+      opacity: 1;
+    }
+    100% {
+      transform: translate(calc(-50% + var(--vx)), calc(100cqh + 100%));
+      opacity: 0;
+    }
+  }
+
+  .meteor-image {
+    width: 100%;
+    height: 100%;
+    mask-image: var(--images-star);
+    mask-size: 100% 100%;
+    mask-position: center;
+    mask-repeat: no-repeat;
+    background-color: currentColor;
+    animation: meteor-roll 2s linear infinite, meteor-blink 0.4s ease-out infinite;
+  }
+
+  @keyframes meteor-roll {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+
+  @keyframes meteor-blink {
+    0% {
+      background-color: #fff;
+    }
+    100% {
+      background-color: currentColor;
+    }
+  }
+</style>

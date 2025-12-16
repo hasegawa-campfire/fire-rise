@@ -1,0 +1,305 @@
+<script type="module">
+  import { createMemo, defineComponent, reactive } from 'elii'
+  import { images, prefs, se } from '@/r.js'
+
+  import XDialog from './x-dialog.m.html'
+  import './x-text.m.html'
+  import './x-button.m.html'
+  import './x-icon.m.html'
+
+  const pageIds = ['about', 'basic', 'move', 'menu', 'outro']
+
+  export default defineComponent({
+    tag: 'dialog-help',
+    document: import.meta.document,
+    setup() {
+      const state = reactive({
+        refDialog: /** @type {XDialog | null} */ (null),
+        pageIndex: 0,
+        pageIds: /** @type {string[]} */ ([]),
+      })
+
+      /**
+       * @param {string|string[]} pageId
+       */
+      const open = (pageId) => {
+        if (Array.isArray(pageId)) {
+          // チュートリアル表示
+          for (const id of pageId) {
+            prefs.seenHelps[id] = true
+          }
+          state.pageIds = pageId
+          state.pageIndex = 0
+          state.refDialog?.open(300, 800)
+        } else {
+          // 通常表示
+          prefs.seenHelps[pageId] = true
+          state.pageIds = pageIds.filter((id) => prefs.seenHelps[id])
+          state.pageIndex = state.pageIds.indexOf(pageId)
+          state.refDialog?.open()
+        }
+      }
+
+      const memo = createMemo(() => {
+        return {
+          currentPageId: state.pageIds[state.pageIndex],
+          totalPages: state.pageIds.length,
+        }
+      })
+
+      const prevPage = () => {
+        if (state.pageIndex > 0) {
+          state.pageIndex--
+        } else {
+          state.pageIndex = memo.totalPages - 1
+        }
+      }
+
+      const nextPage = () => {
+        if (state.pageIndex < memo.totalPages - 1) {
+          state.pageIndex++
+        } else {
+          state.pageIndex = 0
+        }
+      }
+
+      /**
+       * @param {number} index
+       */
+      const onPageNavDotClick = (index) => {
+        state.pageIndex = index
+        se.click.play()
+      }
+
+      return {
+        images,
+        state,
+        memo,
+        prevPage,
+        nextPage,
+        onPageNavDotClick,
+        $expose: {
+          open,
+        },
+      }
+    },
+  })
+</script>
+
+<template>
+  <x-dialog data-ref="state.refDialog">
+    <div class="pages">
+      <template data-if="state.pageIds.includes('about')">
+        <div class="page" data-class-current="memo.currentPageId === 'about'">
+          <x-text class="title" value="このゲームは？"></x-text>
+
+          <p>
+            CAMPFIREのアドベントカレンダー<br />
+            で作られたミニゲームです<br />
+            <a href="https://qiita.com/advent-calendar/2025/campfire" target="_blank">Advent Calendar 2025</a>
+          </p>
+
+          <div class="credit">
+            <div class="credit-label">制作</div>
+            <div><a href="https://x.com/hsgwkt" target="_blank">8kg</a></div>
+            <div class="credit-label">音楽</div>
+            <div><a href="https://dova-s.jp" target="_blank">DOVA-SYNDROME</a></div>
+            <div class="credit-label">効果音</div>
+            <div><a href="https://soundeffect-lab.info" target="_blank">効果音ラボ</a></div>
+            <div class="credit-label">フォント</div>
+            <div><a href="https://fonts.google.com/specimen/M+PLUS+1p" target="_blank">M PLUS 1p</a></div>
+            <div class="credit-label">アイコン</div>
+            <div><a href="https://tabler.io/icons" target="_blank">Tabler Icons</a></div>
+          </div>
+        </div>
+      </template>
+
+      <template data-if="state.pageIds.includes('basic')">
+        <div class="page" data-class-current="memo.currentPageId === 'basic'">
+          <x-text class="title" value="あそびかた"></x-text>
+          <p>たきびさん</p>
+          <p>を</p>
+          <p>まとめよう！</p>
+        </div>
+      </template>
+
+      <template data-if="state.pageIds.includes('move')">
+        <div class="page" data-class-current="memo.currentPageId === 'move'">
+          <x-text class="title" value="いどうルール"></x-text>
+          <p>上におけるのは<br />おなじ色か、あいた列だけ</p>
+          <p>高さにもちゅうい</p>
+        </div>
+      </template>
+
+      <template data-if="state.pageIds.includes('menu')">
+        <div class="page" data-class-current="memo.currentPageId === 'menu'">
+          <x-text class="title" value="こまった時は？"></x-text>
+          <p>元にもどします</p>
+          <p>あたらしくやり直します</p>
+        </div>
+      </template>
+
+      <template data-if="state.pageIds.includes('outro')">
+        <div class="page" data-class-current="memo.currentPageId === 'outro'">
+          <x-text class="title" value="すべて"></x-text>
+          <p>なにが出るのか<br />きぶんしだい</p>
+          <p>Streakがふえるほど<br />むずかしくなります</p>
+          <br />
+          <p class="outro-text">
+            <template data-for="char, index in Array.from('THANK YOU FOR PLAYING!')">
+              <span class="outro-char" data-style--index="index" data-text="char"></span>
+            </template>
+          </p>
+        </div>
+      </template>
+    </div>
+
+    <template data-if="memo.totalPages > 1">
+      <div class="page-nav">
+        <x-button data-on-click="prevPage">
+          <x-icon color="darkorange" data-prop-svg-url="images.icon.arrowLeft"></x-icon>
+        </x-button>
+
+        <div class="page-nav-dots">
+          <template data-for="page, index in state.pageIds" data-key="page">
+            <div
+              class="page-nav-dot"
+              data-class-current="state.pageIndex === index"
+              data-on-click="() => onPageNavDotClick(index)"
+            ></div>
+          </template>
+        </div>
+
+        <x-button data-on-click="nextPage">
+          <x-icon color="darkorange" data-prop-svg-url="images.icon.arrowRight"></x-icon>
+        </x-button>
+      </div>
+    </template>
+  </x-dialog>
+</template>
+
+<style>
+  :host {
+    display: contents;
+  }
+
+  .pages {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .page {
+    grid-row: 1;
+    grid-column: 1;
+    text-align: center;
+
+    &:not(.current) {
+      visibility: hidden;
+    }
+  }
+
+  .title {
+    display: block;
+    text-align: center;
+    font-size: 20px;
+    margin-bottom: 24px;
+    color: gold;
+  }
+
+  .sub-title {
+    margin: 16px 0;
+  }
+
+  p {
+    margin: 12px 0;
+    font-size: 18px;
+    line-height: 1.4;
+    color: #5d1a00;
+  }
+
+  .credit {
+    margin: 24px auto 0;
+    width: fit-content;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 2px 8px;
+    text-align: left;
+    color: #5d1a00;
+    font-size: 14px;
+  }
+
+  .credit-label {
+    text-align: right;
+  }
+
+  a {
+    color: darkorange;
+  }
+
+  .outro-text {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .outro-char {
+    white-space: pre;
+
+    .current & {
+      animation: outro-char-animation 4s calc(var(--index) * 0.07s) linear infinite;
+    }
+  }
+
+  @keyframes outro-char-animation {
+    0% {
+      transform: translateY(0px);
+      animation-timing-function: ease-out;
+    }
+    4% {
+      transform: translateY(-0.7em);
+      animation-timing-function: ease-in;
+    }
+    8% {
+      transform: translateY(0px);
+      animation-timing-function: linear;
+    }
+    100% {
+      transform: translateY(0px);
+    }
+  }
+
+  .page-nav {
+    position: relative;
+    top: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
+  }
+
+  .page-nav-dots {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .page-nav-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #aaa;
+    border: 3px solid transparent;
+    background-clip: content-box;
+    cursor: pointer;
+
+    &.current {
+      border-color: #5d1a00;
+      background-color: gold;
+      background-image: url('/assets/wave.png');
+      background-size: auto 100%;
+      background-repeat: no-repeat;
+      background-position: center;
+      pointer-events: none;
+    }
+  }
+</style>

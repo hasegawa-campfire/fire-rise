@@ -2,22 +2,22 @@
   import { createMemo, defineComponent } from 'elii'
   import {
     blockFillColors,
-    blockWidth,
     blockHeight,
     blockOverlap,
-    linePaddingSide,
     linePaddingTop,
     linePaddingBottom,
-    findBlockById,
-    isAddableBlocksToLine,
-  } from '@/rule/block-utils.js'
+    isMovableBlock,
+    lineWidth,
+    calcBlocksHeight,
+    calcLineHeight,
+  } from '@/rule/board-utils.js'
 
   export default defineComponent({
     tag: 'play-line',
     document: import.meta.document,
     props: {
-      line: /** @type {Line} */ ({}),
-      lines: /** @type {Line[]} */ ([]),
+      lineId: '',
+      board: /** @type {Board} */ ({ lines: {}, blocks: {} }),
       boardScaleX: 1,
       boardScaleY: 1,
       selectedBlockId: '',
@@ -25,24 +25,26 @@
       hoverLineId: '',
     },
     setup(props) {
-      const lineIndex = props.lines.findIndex((line) => line.id === props.line.id)
+      const lineIndex = Object.keys(props.board.lines).indexOf(props.lineId)
 
-      const blocksHeight = blockHeight * props.line.size - blockOverlap * (props.line.size - 1)
+      const line = props.board.lines[props.lineId]
+      const blocksHeight = calcBlocksHeight(line.size)
 
       const memo = createMemo(() => {
-        const selected = props.selectedBlockId ? findBlockById(props.lines, props.selectedBlockId) : null
-        const isSelectable = !!selected && isAddableBlocksToLine(props.line, selected.line, selected.blockIndex)
+        const line = props.board.lines[props.lineId]
+
+        const selectedBlock = props.selectedBlockId ? props.board.blocks[props.selectedBlockId] : null
+        const isSelectable = !!selectedBlock && isMovableBlock(props.board, line, selectedBlock)
 
         const blocksOffsetY =
-          props.line.blocks.length <= 0
-            ? blocksHeight
-            : (blockHeight - blockOverlap) * (props.line.size - props.line.blocks.length)
+          line.blockIds.length <= 0 ? blocksHeight : (blockHeight - blockOverlap) * (line.size - line.blockIds.length)
 
         return {
-          selectedColor: selected ? blockFillColors[selected.block.color] : '',
+          line,
+          selectedColor: selectedBlock ? blockFillColors[selectedBlock.color] : '',
           isSelectable,
-          isDroppable: isSelectable && props.hoverLineId === props.line.id && !!props.dragInfo,
-          markerY: linePaddingTop + blocksOffsetY - blockOverlap * 0.5,
+          isDroppable: isSelectable && props.hoverLineId === props.lineId && !!props.dragInfo,
+          markerY: linePaddingTop + blocksOffsetY - (blockHeight - blockOverlap) * 0.5,
         }
       })
 
@@ -51,8 +53,8 @@
         memo,
         linePaddingBottom,
         lineIndex,
-        lineWidth: blockWidth + linePaddingSide * 2,
-        lineHeight: blocksHeight + linePaddingTop + linePaddingBottom,
+        lineWidth,
+        lineHeight: calcLineHeight(line.size),
       }
     },
   })
@@ -63,8 +65,8 @@
     class="line"
     data-class-selectable="memo.isSelectable"
     data-class-droppable="memo.isDroppable"
-    data-style-left="`${props.line.x * props.boardScaleX}cqw`"
-    data-style-top="`${props.line.y * props.boardScaleY}cqh`"
+    data-style-left="`${memo.line.x * props.boardScaleX}cqw`"
+    data-style-top="`${memo.line.y * props.boardScaleY}cqh`"
     data-style-width="`${lineWidth * props.boardScaleX}cqw`"
     data-style-height="`${lineHeight * props.boardScaleY}cqh`"
   >
@@ -72,7 +74,7 @@
     <div class="line-shadow"></div>
     <div
       class="line-bottom"
-      data-class-empty="props.line.blocks.length === 0"
+      data-class-fell="memo.line.blockIds.length === 0 && props.board.disableEmptyDrop"
       data-class-even="lineIndex % 2 === 0"
       data-style-height="`${linePaddingBottom * props.boardScaleY}cqh`"
     ></div>
@@ -95,13 +97,17 @@
   .line {
     position: absolute;
     z-index: 0;
+
+    &.selectable {
+      cursor: pointer;
+    }
   }
 
   .line-bg {
     position: absolute;
-    inset: 0 8px 0;
+    inset: 0 calc(var(--border-width) * 2) 0;
     background-color: #0003;
-    border: 4px solid #0002;
+    border: var(--border-width) solid #0002;
     border-radius: 999px 999px 0 0;
 
     .selectable & {
@@ -115,26 +121,29 @@
 
   .line-shadow {
     position: absolute;
-    inset: 16px 24px 0;
+    inset: calc(var(--border-width) * 4) calc(var(--border-width) * 6) calc(var(--border-width) * 4);
     background-color: #0002;
     border-radius: 999px 999px 0 0;
   }
 
   .line-bottom {
     position: absolute;
-    inset: auto 4px 0;
-    border: 4px solid #5d1a00;
+    inset: auto var(--border-width) 0;
+    border: var(--border-width) solid #5d1a00;
     border-radius: 2px;
     background-color: #921400;
     background-image: linear-gradient(to bottom, #0002, #0002 50%, transparent 50%, transparent);
     box-sizing: border-box;
+    transition: opacity 0.3s ease-out;
 
     &.even {
       background-color: #bd1900;
     }
 
-    .selectable &.empty {
-      /* box-shadow: 0 0 0 4px #fff; */
+    &.fell {
+      opacity: 0;
+      translate: 0 50%;
+      transition: opacity 0.3s ease-in, translate 0.3s ease-in;
     }
   }
 

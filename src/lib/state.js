@@ -1,9 +1,8 @@
-import { batch, batchify, createEffect, reactive, toRaw } from 'elii'
+import { batch, createEffect, reactive, toRaw } from 'elii'
 import { parseObject } from './utils.js'
 
 /**
  * ローカルストレージ連携のステートを作成する
- *
  * @template {object} T
  * @param {string} storageKey
  * @param {T} defaultState
@@ -24,7 +23,6 @@ export function createLocalStorageState(storageKey, defaultState) {
 
 /**
  * セッションストレージ連携のステートを作成する
- *
  * @template {object} T
  * @param {string} storageKey
  * @param {T} defaultState
@@ -47,7 +45,6 @@ export function createSessionStorageState(storageKey, defaultState) {
  * ヒストリー連携のステートを作成する
  *
  * 読み取り専用です。変更はpushHistoryStateを使用してください。
- *
  * @template {object} T
  * @param {string} stateKey
  * @param {T} defaultState

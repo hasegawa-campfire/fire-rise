@@ -23,12 +23,41 @@ type RemoveIndexSignature<T> = {
 interface Block {
   id: string
   color: string
+  lineId: string
+  index: number
 }
 
 interface Line {
   id: string
-  blocks: Block[]
+  blockIds: string[]
   size: number
   x: number
   y: number
+}
+
+interface Board {
+  levelId: string
+  seed: number
+  disableEmptyDrop: boolean
+  steps: number
+  lines: Record<string, Line>
+  blocks: Record<string, Block>
+}
+
+interface Level {
+  id: string
+  displayId: string
+  name: string
+  helpPageId?: string
+  disableEmptyDrop?: boolean
+  isVisible: () => boolean
+  isUnlocked: () => boolean
+  createBoard: (seed: number | null) => Board
+}
+
+interface LevelStats {
+  wins: number
+  streak: number
+  highestStreak: number
+  seed: number | null
 }

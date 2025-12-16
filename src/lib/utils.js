@@ -77,3 +77,14 @@ export function parseObject(json) {
     return null
   }
 }
+
+/**
+ * 値を範囲内にマッピングする
+ *
+ * @param {number} value
+ * @param {number} min
+ * @param {number} max
+ */
+export function mapRange(value, min, max) {
+  return min + value * (max - min)
+}

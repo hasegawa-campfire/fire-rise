@@ -1,0 +1,51 @@
+<script type="module">
+  import { defineComponent } from 'elii'
+  import { se } from '@/r.js'
+
+  export default defineComponent({
+    tag: 'x-button',
+    document: import.meta.document,
+    props: {
+      shadow: false,
+    },
+    setup(props) {
+      const onPointerDown = () => {
+        se.click.play()
+      }
+
+      return {
+        props,
+        onPointerDown,
+      }
+    },
+  })
+</script>
+
+<template>
+  <div class="content" data-class-shadow="props.shadow" data-on-pointerdown="onPointerDown">
+    <slot></slot>
+  </div>
+</template>
+
+<style>
+  :host {
+    display: block;
+  }
+
+  :host([inert]) {
+    opacity: 0.67;
+  }
+
+  .content {
+    cursor: pointer;
+
+    &:active {
+      opacity: 0.8;
+      translate: 0 1px;
+    }
+
+    &.shadow {
+      filter: drop-shadow(0 calc(var(--border-width) * 1.5) 0 rgba(0, 0, 0, 0.2));
+    }
+  }
+</style>

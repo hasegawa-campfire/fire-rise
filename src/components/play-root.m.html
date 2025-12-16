@@ -1,52 +1,156 @@
 <script type="module">
-  import { defineComponent, reactive } from 'elii'
-  import { getCompletionRate, isGoalState, isStuckState } from '@/rule/block-utils.js'
-  import { route, pushRoute } from '@/r.js'
-  import { levels } from '@/rule/level.js'
+  import { defineComponent, onCleanup, reactive, toRaw } from 'elii'
+  import { cloneBoard, getCompletionRate, isGoalState, isStuckState } from '@/rule/board-utils.js'
+  import { route, pushRoute, runtime, images, prefs, bgm, se } from '@/r.js'
+  import { getNextLevel, levels } from '@/rule/level.js'
 
-  import './play-board.m.html'
+  import './x-header.m.html'
+  import './x-icon.m.html'
+  import './x-button.m.html'
   import './x-bg.m.html'
+  import './x-overlay.m.html'
+  import './x-text.m.html'
+  import DialogHelp from './dialog-help.m.html'
+  import DialogRestart from './dialog-restart.m.html'
+  import PlayBoard from './play-board.m.html'
 
   export default defineComponent({
     tag: 'play-root',
     document: import.meta.document,
     setup() {
+      runtime.result = null
+      let failureTimeoutId = 0
+
+      onCleanup(() => {
+        window.clearTimeout(failureTimeoutId)
+        failureTimeoutId = 0
+      })
+
       const level = levels.find((level) => level.id === route.levelId)
       if (!level) throw Error('level not found')
 
-      const shuffledLines = level.createLines()
-
-      const state = reactive({
-        lines: structuredClone(shuffledLines),
-        particleLevel: getCompletionRate(shuffledLines) ** 2 * 0.8 + 0.2,
-      })
-
-      const retry = () => {
-        state.lines = structuredClone(shuffledLines)
-        state.particleLevel = getCompletionRate(state.lines) ** 2 * 0.8 + 0.2
+      if (!prefs.levelStats[level.id]) {
+        prefs.levelStats[level.id] = {
+          wins: 0,
+          streak: 0,
+          highestStreak: 0,
+          seed: null,
+        }
       }
 
+      const levelStats = prefs.levelStats[level.id]
+
+      let boardhistory = [level.createBoard(levelStats.seed)]
+
+      levelStats.seed = boardhistory[0].seed
+
+      const state = reactive({
+        board: cloneBoard(boardhistory[0]),
+        completionRate: getCompletionRate(boardhistory[0]),
+        isFirstMove: true,
+        isVisibleLevelStats: levelStats.wins > 0,
+        refRestart: /** @type {DialogRestart | null} */ (null),
+        refHelp: /** @type {DialogHelp | null} */ (null),
+        refPlayBoard: /** @type {PlayBoard | null} */ (null),
+      })
+
+      runtime.ready.then(() => {
+        bgm.play.play(0.2)
+
+        if (level.helpPageId && !prefs.seenHelps[level.helpPageId]) {
+          state.refHelp?.open([level.helpPageId])
+        }
+      })
+
       const goToTitle = () => {
-        pushRoute({ page: 'title' })
+        let levelId = level.id
+
+        // ゲームクリアで、次のレベルが未クリアならそれをフォーカスする
+        if (runtime.result === 'success') {
+          const nextLevel = getNextLevel(level)
+          if (nextLevel && !(prefs.levelStats[nextLevel.id]?.wins > 0)) {
+            levelId = nextLevel.id
+          }
+        }
+
+        pushRoute({ page: 'title', focusLevelId: levelId })
+      }
+
+      const confirmRestart = () => {
+        if (runtime.result === 'success') {
+          restart()
+        } else {
+          state.refRestart?.open(restart)
+        }
+      }
+
+      const restart = () => {
+        if (!runtime.result) levelStats.streak = 0
+        runtime.result = null
+        window.clearTimeout(failureTimeoutId)
+        failureTimeoutId = 0
+
+        boardhistory = [level.createBoard(null)]
+        levelStats.seed = boardhistory[0].seed
+
+        state.board = cloneBoard(boardhistory[0])
+        state.completionRate = getCompletionRate(boardhistory[0])
+        state.isFirstMove = true
+        state.isVisibleLevelStats = levelStats.wins > 0
+        state.refPlayBoard?.restart()
+      }
+
+      const undo = () => {
+        runtime.result = null
+        window.clearTimeout(failureTimeoutId)
+        failureTimeoutId = 0
+
+        boardhistory.pop()
+        const board = boardhistory.at(-1)
+        if (!board) throw Error('board not found')
+
+        state.board = cloneBoard(board)
+        state.completionRate = getCompletionRate(board)
+        state.isFirstMove = boardhistory.length === 1
       }
 
       const onBlockMove = () => {
-        console.log('onBlockMove')
-        if (isGoalState(state.lines)) {
-          console.log('Goal state reached')
-          state.particleLevel = 1
-        } else if (isStuckState(state.lines)) {
-          console.log('No possible moves')
-          state.particleLevel = 0
+        if (runtime.result === 'success') return
+
+        state.isFirstMove = false
+        boardhistory.push(cloneBoard(toRaw(state.board, true)))
+
+        if (runtime.result || failureTimeoutId) return
+
+        if (isGoalState(state.board)) {
+          state.completionRate = 1
+          runtime.result = 'success'
+          levelStats.wins++
+          levelStats.streak++
+          levelStats.seed = null
+          if (levelStats.streak > levelStats.highestStreak) {
+            levelStats.highestStreak = levelStats.streak
+          }
+          se.clear.play()
+        } else if (isStuckState(state.board)) {
+          state.completionRate = -1
+          levelStats.streak = 0
+          runtime.result = 'failure'
         } else {
-          state.particleLevel = getCompletionRate(state.lines) ** 2 * 0.8 + 0.2
+          state.completionRate = getCompletionRate(state.board)
         }
       }
 
       return {
+        images,
+        runtime,
         state,
-        retry,
+        level,
+        levelStats,
+        helpPageId: level.helpPageId ?? 'basic',
         goToTitle,
+        confirmRestart,
+        undo,
         onBlockMove,
       }
     },
@@ -54,18 +158,199 @@
 </script>
 
 <template>
-  <x-bg data-prop-particle-level="state.particleLevel">
-    <div class="content">
-      <button data-on-click="retry">retry</button>
-      <button data-on-click="goToTitle">title</button>
+  <x-header data-prop-help-page-id="helpPageId">
+    <x-button slot="left" shadow data-on-click="goToTitle">
+      <x-icon data-prop-svg-url="images.icon.back"></x-icon>
+    </x-button>
+    <div slot="center" class="level-info">
+      <div class="level-display-id" data-text="level.displayId"></div>
+      <x-text class="level-name" data-prop-value="level.name"></x-text>
+    </div>
+    <div slot="right" class="level-stats" data-prop-hidden="!state.isVisibleLevelStats">
+      <div class="level-stats-name">Wins:</div>
+      <div class="level-stats-value" data-text="levelStats.wins"></div>
+      <div class="level-stats-name">Streak:</div>
+      <div class="level-stats-value" data-text="levelStats.streak"></div>
+    </div>
+    <x-button slot="right" shadow data-on-click="confirmRestart">
+      <x-icon data-prop-svg-url="images.icon.restart"></x-icon>
+    </x-button>
+    <x-button
+      slot="right"
+      shadow
+      data-on-click="undo"
+      data-prop-inert="state.isFirstMove || runtime.result === 'success'"
+    >
+      <x-icon
+        data-prop-svg-url="images.icon.undo"
+        data-prop-disabled="state.isFirstMove || runtime.result === 'success'"
+      ></x-icon>
+    </x-button>
+  </x-header>
 
-      <play-board data-prop-lines="state.lines" data-prop-on-block-move="onBlockMove"></play-board>
+  <x-bg
+    data-prop-particle-level="state.completionRate < 0 ? 0 : state.completionRate ** 2 * 0.8 + 0.2"
+    data-class="runtime.result"
+  >
+    <div class="bg-overlay" data-class-active="runtime.result === 'success'"></div>
+
+    <div class="content">
+      <play-board
+        data-prop-board="state.board"
+        data-prop-on-block-move="onBlockMove"
+        data-ref="state.refPlayBoard"
+      ></play-board>
     </div>
   </x-bg>
+
+  <div class="flash-overlay" data-class-active="runtime.result === 'success'"></div>
+
+  <x-overlay class="success-overlay">
+    <x-text class="success-text" data-class-active="runtime.result === 'success'" value="VICTORY" shadow></x-text>
+  </x-overlay>
+
+  <dialog-restart data-ref="state.refRestart"></dialog-restart>
+  <dialog-help data-ref="state.refHelp"></dialog-help>
 </template>
 
 <style>
   :host {
-    display: contents;
+    display: block;
+    overflow: hidden;
+  }
+
+  [hidden] {
+    display: none !important;
+  }
+
+  x-bg {
+    &.success::part(bg) {
+      filter: brightness(1.2);
+    }
+
+    &.failure::part(bg) {
+      filter: grayscale(0.5);
+    }
+  }
+
+  .bg-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: #fff3;
+    opacity: 0;
+    will-change: opacity;
+
+    &.active {
+      animation: blink 1s infinite alternate;
+    }
+  }
+
+  @keyframes blink {
+    0% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+
+  .content {
+    padding: calc(50px + 10cqw) 0 0;
+  }
+
+  .level-info {
+    position: relative;
+    white-space: nowrap;
+
+    @media (width <= 420px) {
+      display: none;
+    }
+  }
+
+  .level-display-id {
+    position: absolute;
+    top: calc(var(--border-width) * -1);
+    left: 50%;
+    transform: translate(-50%, -100%);
+    font-size: 12px;
+    color: #fff;
+    text-align: center;
+    filter: drop-shadow(0px 3px 0 #0002);
+
+    @media (width <= 520px) {
+      font-size: 11px;
+    }
+
+    @media (width <= 375px) {
+      font-size: 10px;
+    }
+  }
+
+  .level-name {
+    font-size: 24px;
+    font-weight: 900;
+    width: fit-content;
+    margin: 0 auto;
+    filter: drop-shadow(0px 3px 0 #0002);
+
+    @media (width <= 520px) {
+      font-size: 4cqw;
+    }
+  }
+
+  .level-stats {
+    color: #fff;
+    font-size: 12px;
+    display: grid;
+    grid-template-columns: auto auto;
+    gap: 0 4px;
+    justify-items: end;
+    filter: drop-shadow(0px 3px 0 #0002);
+
+    @media (width <= 520px) {
+      font-size: 11px;
+    }
+
+    @media (width <= 375px) {
+      font-size: 10px;
+    }
+  }
+
+  .flash-overlay {
+    position: fixed;
+    inset: 0;
+    background: #fffc;
+    opacity: 0;
+    will-change: opacity;
+    z-index: 10000;
+    pointer-events: none;
+
+    &.active {
+      animation: flash 2s ease-out;
+    }
+  }
+
+  @keyframes flash {
+    0% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+
+  .success-overlay {
+    pointer-events: none;
+  }
+
+  .success-text {
+    opacity: 0;
+    font-size: calc(10px + 5cqw);
+
+    &.active {
+      transition: opacity 0.5s ease-out;
+      opacity: 1;
+    }
   }
 </style>

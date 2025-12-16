@@ -1,61 +1,92 @@
 <script type="module">
-  import { defineComponent, reactive } from 'elii'
-  import { pushRoute } from '@/r.js'
+  import { createMemo, defineComponent, reactive } from 'elii'
+  import { pushRoute, route, runtime, prefs, bgm, se } from '@/r.js'
   import { levels } from '@/rule/level.js'
 
-  import './title-logo.m.html'
-  import './title-stage.m.html'
+  import './x-header.m.html'
   import './x-bg.m.html'
-  import './help-title.m.html'
+  import './title-logo.m.html'
+  import './title-sky.m.html'
+  import TitleStage from './title-stage.m.html'
 
   export default defineComponent({
     tag: 'title-root',
     document: import.meta.document,
     setup() {
       const state = reactive({
-        refHelpTitle: /** @type {{open: (wait?: number) => void} | null} */ (null),
+        isReady: false,
+        refStages: /** @type {Record<string, TitleStage>} */ ({}),
       })
 
-      const openHelp = () => {
-        state.refHelpTitle?.open()
-      }
+      const memo = createMemo(() => {
+        return {
+          filteredLevels: levels.filter((level) => level.isVisible()),
+          isCompleted: levels.every((level) => prefs.levelStats[level.id]?.wins > 0),
+        }
+      })
+
+      runtime.ready.then(() => {
+        bgm.title.play(0.2)
+        state.isReady = true
+      })
 
       /**
        * @param {string} levelId
        */
       const goToPlay = (levelId) => {
-        pushRoute({ page: 'play', levelId })
+        if (levels.find((level) => level.id === levelId)?.isUnlocked()) {
+          pushRoute({ page: 'play', levelId })
+          se.start.play()
+        }
       }
 
+      requestAnimationFrame(() => {
+        if (!prefs.seenCompleted && memo.isCompleted) {
+          prefs.seenCompleted = true
+          window.scroll({ top: 0, behavior: 'smooth' })
+        } else if (route.focusLevelId) {
+          state.refStages[route.focusLevelId]?.scrollIntoView({ block: 'center' })
+        }
+      })
+
       return {
-        goToPlay,
         state,
-        openHelp,
-        levels, //: [{ name: 'サンプル', id: 'tutorial1' }],
+        memo,
+        levels,
+        goToPlay,
       }
     },
   })
 </script>
 
 <template>
-  <x-bg data-prop-particle-level="0.2">
+  <x-header help-page-id="about">
+    <title-logo slot="bottom"></title-logo>
+  </x-header>
+
+  <template data-if="memo.isCompleted">
+    <title-sky></title-sky>
+  </template>
+
+  <x-bg
+    data-class-show-all-levels="memo.filteredLevels.length === levels.length"
+    data-prop-particle-level="Math.max(memo.filteredLevels.length / levels.length, 0.2)"
+    data-prop-particle-duration-rate="Math.max(memo.filteredLevels.length / 2, 1)"
+    data-prop-is-tip="memo.isCompleted"
+  >
     <div class="bg-container">
       <div class="bg"></div>
     </div>
 
-    <title-logo></title-logo>
-
-    <button class="help-button" data-on-click="openHelp">Help</button>
-
     <div class="content">
-      <help-title data-ref="state.refHelpTitle"></help-title>
-
       <div class="stages">
-        <template data-for="level, index in levels.toReversed()" data-key="level.id">
+        <template data-for="level, index in memo.filteredLevels.toReversed()" data-key="level.id">
           <title-stage
-            data-prop-name="level.name"
-            data-prop-level-index="levels.length - index - 1"
+            data-prop-is-ready="state.isReady"
+            data-prop-level="level"
+            data-prop-level-index="memo.filteredLevels.length - index - 1"
             data-on-click="() => goToPlay(level.id)"
+            data-ref-stage="state.refStages[level.id]"
           ></title-stage>
         </template>
       </div>
@@ -65,16 +96,16 @@
 
 <style>
   :host {
-    display: contents;
+    display: block;
+    overflow: hidden;
   }
 
-  title-logo {
-    position: fixed;
-    inset: 60px 0 auto;
-    margin: auto;
-    width: max-content;
-    height: max-content;
-    z-index: 10000;
+  [hidden] {
+    display: none !important;
+  }
+
+  x-bg.show-all-levels::part(bg) {
+    background: linear-gradient(to bottom, #543, #864 50cqw, #d63 100cqw, #fb3);
   }
 
   .bg-container {
@@ -87,30 +118,23 @@
   .bg {
     position: absolute;
     inset: 0;
-    background-image: url('/assets/board-bg.png');
+    background-image: var(--images-board-bg);
     background-size: 40cqw 20cqw;
     background-position: 50% 0;
     opacity: 0.06;
   }
 
-  .help-button {
-    position: fixed;
-    top: 20px;
-    right: calc(50% - 240px);
-    z-index: 10000;
-  }
-
   .content {
     position: relative;
-    padding: 260px 0 100px;
+    padding: calc(150px + 30cqw) 0 0;
     z-index: 1;
   }
 
   .stages {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 120px;
-    width: 200px;
+    gap: calc(120px + 6cqw);
+    width: calc(150px + 6.5cqw);
     margin: 0 auto;
     min-height: 100%;
     min-width: 0;

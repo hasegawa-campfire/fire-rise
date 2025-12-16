@@ -32,7 +32,7 @@ export function isComponent(element) {
  * @param {Document} options.document - HTMLモジュールのimport.meta.document
  * @param {TProps} [options.props] - プロパティ定義（例: {count: 0, name: 'default'}）
  * @param {(props: TProps) => TSetupResult} [options.setup] - セットアップ関数
- * @returns {typeof HTMLElement & TProps & TSetupResult['$expose']} コンポーネントクラス
+ * @returns {HTMLElement & TProps & TSetupResult['$expose']} コンポーネントクラス
  */
 export function defineComponent(options) {
   const { tag, document: moduleDocument, props: propsDefinition = /** @type {TProps} */ ({}), setup } = options

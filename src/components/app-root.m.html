@@ -1,19 +1,28 @@
 <script type="module">
   import { defineComponent, reactive } from 'elii'
-  import { route } from '@/r.js'
+  import { hasBeenActive, stickyActivation } from '@/lib/user-activation.js'
+  import { route, images } from '@/r.js'
 
   import './title-root.m.html'
   import './play-root.m.html'
+  import './x-text.m.html'
+  import './x-overlay.m.html'
 
   export default defineComponent({
     tag: 'app-root',
     document: import.meta.document,
     setup() {
-      const state = reactive({})
+      const state = reactive({
+        isReady: hasBeenActive(),
+      })
 
-      console.log(route.page)
+      stickyActivation.then(() => {
+        state.isReady = true
+        document.body.classList.add('ready')
+      })
 
       return {
+        images,
         route,
         state,
       }
@@ -22,22 +31,108 @@
 </script>
 
 <template>
-  <template data-if="route.page === 'title'">
-    <title-root></title-root>
-  </template>
-  <template data-if="route.page === 'play'">
-    <play-root></play-root>
-  </template>
+  <div
+    class="container"
+    data-style--images-wave="`url('${images.wave}')`"
+    data-style--images-star="`url('${images.star}')`"
+    data-style--images-half-tone="`url('${images.halfTone}')`"
+    data-style--images-board-bg="`url('${images.boardBg}')`"
+  >
+    <template data-if="route.page === 'title'">
+      <title-root></title-root>
+    </template>
+    <template data-if="route.page === 'play'">
+      <play-root></play-root>
+    </template>
+
+    <div class="footer">
+      <div class="footer-image"></div>
+    </div>
+
+    <x-overlay class="splash" data-prop-hidden="state.isReady">
+      <x-text class="is-mouse" value="CLICK TO START" shadow></x-text>
+      <x-text class="is-touch" value="TAP TO START" shadow></x-text>
+    </x-overlay>
+  </div>
 </template>
 
 <style>
   :host {
+    display: contents;
+  }
+
+  .container {
     display: block;
     position: relative;
-    overflow: hidden;
     margin: 0 auto;
-    width: 600px;
+    width: 768px;
     max-width: 100%;
-    min-height: 100dvh;
+    container-type: inline-size;
+
+    --border-width: 4px;
+    --footer-height: 100px;
+    --side-bar-width: 5cqw;
+
+    @media (width <= 520px) {
+      --side-bar-width: 4cqw;
+      --border-width: 3px;
+      --footer-height: 80px;
+    }
+
+    @media (width <= 375px) {
+      --side-bar-width: 3cqw;
+      --border-width: 2px;
+      --footer-height: 60px;
+    }
+  }
+
+  [hidden] {
+    display: none !important;
+  }
+
+  @media (hover: hover) {
+    .is-touch {
+      display: none !important;
+    }
+  }
+
+  @media (hover: none) {
+    .is-mouse {
+      display: none !important;
+    }
+  }
+
+  .splash {
+    cursor: pointer;
+    font-size: calc(10px + 5cqw);
+
+    x-text {
+      animation: blink 1s 1s steps(2, jump-none) infinite;
+    }
+  }
+
+  @keyframes blink {
+    0% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+
+  .footer {
+    position: sticky;
+    bottom: 0;
+    z-index: 10001;
+  }
+
+  .footer-image {
+    position: absolute;
+    inset: auto 0 0;
+    height: var(--footer-height);
+    background-image: var(--images-half-tone);
+    background-size: auto 100%;
+    pointer-events: none;
+    background-position: center;
   }
 </style>

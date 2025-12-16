@@ -1,43 +1,74 @@
 <script type="module">
-  import { defineComponent } from 'elii'
+  import { createMemo, defineComponent } from 'elii'
+  import { images, prefs } from '@/r.js'
 
   import './x-text.m.html'
+  import './x-icon.m.html'
 
   export default defineComponent({
     tag: 'title-stage',
     document: import.meta.document,
     props: {
-      name: '',
+      isReady: false,
+      level: /** @type {Level} */ ({}),
       levelIndex: 0,
     },
     setup(props) {
+      const memo = createMemo(() => {
+        const levelStats = prefs.levelStats[props.level.id]
+        return {
+          levelStats,
+          hasWon: levelStats?.wins > 0,
+          isNew: !levelStats,
+          isLocked: !props.level.isUnlocked(),
+        }
+      })
+
       return {
+        images,
         props,
+        memo,
       }
     },
   })
 </script>
 
 <template>
-  <div class="item">
+  <div
+    class="item"
+    data-class-ready="props.isReady"
+    data-class-won="memo.hasWon"
+    data-class-locked="memo.isLocked"
+    data-prop-inert="memo.isLocked"
+  >
     <div class="item-inner border"></div>
     <div class="item-inner fill"></div>
 
-    <div class="star">
+    <div class="star" data-prop-hidden="!memo.hasWon">
       <div class="star-image outline"></div>
       <div class="star-image base"></div>
     </div>
 
-    <div>
-      <div class="level" data-text="`Level ${props.levelIndex + 1}`"></div>
-      <x-text class="name" data-prop-value="props.name"></x-text>
+    <x-icon
+      class="level-lock"
+      data-prop-svg-url="images.icon.lock"
+      data-prop-hidden="!memo.isLocked"
+      data-prop-shadow="false"
+    ></x-icon>
+    <div class="level-text" data-prop-hidden="memo.isLocked">
+      <div
+        class="level-display-id"
+        data-class-new="memo.isNew"
+        data-text="memo.isNew ? 'New' : props.level.displayId"
+      ></div>
+      <x-text class="level-name" data-prop-value="props.level.name"></x-text>
     </div>
 
-    <div class="details">
-      <div class="detail-name">Wins:</div>
-      <div class="detail-value">1</div>
-      <div class="detail-name">Highest streak:</div>
-      <div class="detail-value">1</div>
+    <div class="level-stats" data-prop-hidden="!memo.hasWon">
+      <div class="level-stats-name">Wins:</div>
+      <div class="level-stats-value" data-text="memo.levelStats?.wins ?? 0"></div>
+      <div class="level-stats-name">Highest streak:</div>
+      <div class="level-stats-value" data-text="memo.levelStats?.highestStreak ?? 0"></div>
     </div>
 
     <div class="item-bottom side-shadow left"></div>
@@ -48,21 +79,39 @@
 
 <style>
   :host {
-    display: contents;
+    display: block;
+  }
+
+  [hidden] {
+    display: none !important;
   }
 
   .item {
     position: relative;
     background-color: #0003;
-    border: 4px solid #0002;
+    border: var(--border-width) solid #0002;
     border-radius: 999px 999px 0 0;
     aspect-ratio: 1;
     display: flex;
     align-items: center;
     justify-content: center;
-    cursor: pointer;
     box-sizing: border-box;
-    box-shadow: 0 0 0 4px #fff;
+    box-shadow: 0 0 0 var(--border-width) var(--shadow-color, orange);
+    transition: opacity 0.3s ease-in, transform 0.3s ease-out;
+    cursor: pointer;
+
+    &:not(.ready) {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+
+    &.won {
+      --shadow-color: #fff;
+    }
+
+    &.locked {
+      --shadow-color: transparent;
+    }
   }
 
   .item-inner {
@@ -71,11 +120,11 @@
 
     &.border {
       inset: 16px 16px 0;
-      border: 4px solid #0002;
+      border: var(--border-width) solid #0002;
     }
 
     &.fill {
-      inset: 24px 24px 0;
+      inset: calc(16px + var(--border-width) * 2) calc(16px + var(--border-width) * 2) 0;
       background-color: #0002;
     }
   }
@@ -87,7 +136,7 @@
   }
 
   .star-image {
-    mask-image: url('/assets/star.png');
+    mask-image: var(--images-star);
     mask-size: 100% 100%;
     mask-position: center;
     mask-repeat: no-repeat;
@@ -98,6 +147,7 @@
       width: 40px;
       height: 40px;
       background-image: linear-gradient(135deg, gold, gold 50%, orange 50%, orange);
+      animation: star-blink 4s ease-out infinite;
     }
 
     &.outline {
@@ -108,39 +158,98 @@
     }
   }
 
-  .level {
+  @keyframes star-blink {
+    0% {
+      opacity: 1;
+    }
+    90% {
+      opacity: 1;
+    }
+    91% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+
+  .level-lock {
+    width: 52px;
+
+    @media (width <= 520px) {
+      width: calc(32px + 4cqw);
+    }
+  }
+
+  .level-text {
+    position: relative;
+  }
+
+  .level-display-id {
     color: #fff;
     font-size: 12px;
     text-align: center;
     margin-bottom: 4px;
+
+    @media (width <= 520px) {
+      font-size: 11px;
+    }
+
+    @media (width <= 375px) {
+      font-size: 10px;
+    }
+
+    &.new {
+      animation: display-id-new 1s steps(2, jump-none) infinite;
+    }
   }
 
-  .name {
-    color: #fff;
+  @keyframes display-id-new {
+    0% {
+      color: #fff;
+    }
+    100% {
+      color: gold;
+    }
+  }
+
+  .level-name {
     font-size: 24px;
     font-weight: 700;
     text-align: center;
+
+    @media (width <= 520px) {
+      font-size: calc(15px + 1cqw);
+    }
   }
 
-  .details {
+  .level-stats {
     position: absolute;
-    bottom: 30px;
-    right: 30px;
+    bottom: calc(20px + 2cqw);
+    right: calc(16px + var(--border-width) * 4);
     color: #fff;
     font-size: 12px;
     display: grid;
     grid-template-columns: auto auto;
     gap: 0 4px;
     justify-items: end;
+
+    @media (width <= 520px) {
+      font-size: 11px;
+    }
+
+    @media (width <= 375px) {
+      font-size: 10px;
+    }
   }
 
   .item-bottom {
     position: absolute;
-    left: -12px;
-    right: -12px;
-    bottom: -4px;
-    height: 30px;
-    border: 4px solid #5d1a00;
+    left: calc(var(--border-width) * -3);
+    right: calc(var(--border-width) * -3);
+    bottom: calc(var(--border-width) * -1);
+    height: calc(20px + 2cqw);
+    border: var(--border-width) solid #5d1a00;
     border-radius: 2px;
     box-sizing: border-box;
 
@@ -163,8 +272,8 @@
     }
 
     &.side-shadow {
-      width: 4px;
-      box-shadow: 0 0 0 4px #fff;
+      width: var(--border-width);
+      box-shadow: 0 0 0 var(--border-width) var(--shadow-color, orange);
 
       &.left {
         rigth: auto;

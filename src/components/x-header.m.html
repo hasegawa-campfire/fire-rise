@@ -1,0 +1,109 @@
+<script type="module">
+  import { createMemo, defineComponent, reactive } from 'elii'
+  import { images, prefs } from '@/r.js'
+
+  import './x-button.m.html'
+  import './x-icon.m.html'
+  import DialogHelp from './dialog-help.m.html'
+  import DialogSettings from './dialog-settings.m.html'
+
+  export default defineComponent({
+    tag: 'x-header',
+    document: import.meta.document,
+    props: {
+      helpPageId: '',
+    },
+    setup(props) {
+      const state = reactive({
+        refHelp: /** @type {DialogHelp | null} */ (null),
+        refSettings: /** @type {DialogSettings | null} */ (null),
+      })
+
+      const memo = createMemo(() => {
+        return {
+          isMute: prefs.volumeBgm <= 0 && prefs.volumeSe <= 0,
+        }
+      })
+
+      const openHelp = () => {
+        state.refHelp?.open(props.helpPageId)
+      }
+
+      const openSettings = () => {
+        state.refSettings?.open()
+      }
+
+      return {
+        images,
+        props,
+        state,
+        memo,
+        openSettings,
+        openHelp,
+      }
+    },
+  })
+</script>
+
+<template>
+  <div class="header">
+    <slot name="left"></slot>
+
+    <div class="center">
+      <slot name="center"></slot>
+    </div>
+
+    <slot name="right"></slot>
+
+    <x-button data-on-click="openSettings" shadow>
+      <x-icon data-prop-svg-url="memo.isMute ? images.icon.audioOff : images.icon.audioOn"></x-icon>
+    </x-button>
+    <x-button data-on-click="openHelp" shadow>
+      <x-icon data-prop-svg-url="images.icon.help"></x-icon>
+    </x-button>
+  </div>
+
+  <div>
+    <slot name="bottom"></slot>
+  </div>
+
+  <dialog-help data-ref="state.refHelp"></dialog-help>
+  <dialog-settings data-ref="state.refSettings"></dialog-settings>
+</template>
+
+<style>
+  :host {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: calc(50% - 50cqw);
+    width: 100cqw;
+    z-index: 10000;
+  }
+
+  .header {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    padding: 16px calc(var(--side-bar-width) * 2);
+
+    @media (width <= 640px) {
+      padding: 16px calc(var(--side-bar-width) * 1.2);
+      gap: 8px;
+    }
+
+    @media (width <= 520px) {
+      padding: 12px 0;
+      gap: 8px;
+    }
+
+    @media (width <= 375px) {
+      padding: 8px 0;
+      gap: 2px;
+    }
+  }
+
+  .center {
+    flex: auto;
+  }
+</style>

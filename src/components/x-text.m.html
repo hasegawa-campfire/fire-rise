@@ -6,7 +6,7 @@
     document: import.meta.document,
     props: {
       value: '',
-      mask: true,
+      shadow: false,
     },
     setup(props) {
       return {
@@ -17,40 +17,41 @@
 </script>
 
 <template>
-  <template data-if="props.mask">
-    <div class="overlay base" data-text="props.value"></div>
-    <div class="overlay mask" data-text="props.value"></div>
-  </template>
-  <template data-if="!props.mask">
-    <div class="overlay" data-text="props.value"></div>
-  </template>
-  <div class="basis" data-text="props.value"></div>
+  <div class="overlay stroke" data-text="props.value"></div>
+  <div class="overlay face" data-text="props.value"></div>
+  <div class="basis" data-class-shadow="props.shadow" data-text="props.value"></div>
 </template>
 
 <style>
   :host {
     display: block;
     position: relative;
-    color: #fff;
   }
 
   .overlay {
     position: absolute;
     inset: 0;
+    white-space: var(--text-white-space, normal);
 
-    &.mask {
-      mask-image: url('/assets/wave.png');
-      mask-size: auto 0.5em;
-      mask-position: center 0.5em;
-      mask-repeat: repeat-x;
+    &.face {
+      background-image: var(--images-wave);
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      background-size: auto 100%;
+      background-color: currentColor;
+      background-repeat: repeat-x;
+      background-position: center;
     }
 
-    &.base {
-      color: gold;
+    &.stroke {
+      -webkit-text-stroke: 0.18em #5d1a00;
     }
   }
 
   .basis {
-    -webkit-text-stroke: 0.2em #5d1a00;
+    white-space: var(--text-white-space, normal);
+    &.shadow {
+      -webkit-text-stroke: 0.36em #fff;
+    }
   }
 </style>

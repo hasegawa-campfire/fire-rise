@@ -15,10 +15,10 @@
 <template>
   <div class="logo">
     <div class="text-overlay shadow" data-text="title"></div>
+    <div class="text-overlay outline3" data-text="title"></div>
     <div class="text-overlay outline2" data-text="title"></div>
     <div class="text-overlay outline1" data-text="title"></div>
-    <div class="text-overlay base" data-text="title"></div>
-    <div class="text-overlay mask" data-text="title"></div>
+    <div class="text-overlay face" data-text="title"></div>
     <div class="text-basis" data-text="title"></div>
   </div>
 </template>
@@ -30,10 +30,9 @@
 
   .logo {
     position: relative;
-    font-size: 80px;
-    font-weight: 900;
+    font-size: calc(20px + 10cqw);
     letter-spacing: 0.02em;
-    color: #000;
+    color: gold;
     width: max-content;
     margin: 0 auto;
   }
@@ -42,30 +41,31 @@
     position: absolute;
     inset: 0;
 
-    &.mask {
-      color: #fff;
-      mask-image: url('/assets/wave.png');
-      mask-size: auto 0.5em;
-      mask-position: center 0.5em;
-      mask-repeat: repeat-x;
-    }
-
-    &.base {
-      -webkit-text-stroke: 4px gold;
-      color: gold;
+    &.face {
+      background-image: var(--images-wave);
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      background-size: auto 100%;
+      background-color: currentColor;
+      background-repeat: repeat-x;
+      background-position: center;
     }
 
     &.outline1 {
-      -webkit-text-stroke: 0.3em darkred;
+      -webkit-text-stroke: var(--border-width) gold;
     }
 
     &.outline2 {
-      -webkit-text-stroke: calc(0.3em + 8px) #fff;
+      -webkit-text-stroke: 0.3em darkred;
+    }
+
+    &.outline3 {
+      -webkit-text-stroke: calc(0.3em + var(--border-width) * 2) #fff;
     }
 
     &.shadow {
-      margin-top: 10px;
-      -webkit-text-stroke: calc(0.3em + 8px) #000;
+      margin-top: calc(var(--border-width) * 2.5);
+      -webkit-text-stroke: calc(0.3em + var(--border-width) * 2) #000;
       opacity: 0.2;
     }
   }
