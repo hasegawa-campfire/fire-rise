@@ -33,6 +33,7 @@ interface Line {
   size: number
   x: number
   y: number
+  even: boolean
 }
 
 interface Board {
@@ -49,6 +50,7 @@ interface Level {
   displayId: string
   name: string
   helpPageId?: string
+  silentHelpPageId?: string
   disableEmptyDrop?: boolean
   isVisible: () => boolean
   isUnlocked: () => boolean

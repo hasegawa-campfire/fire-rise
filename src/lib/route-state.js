@@ -35,6 +35,7 @@ export function createRouteState(stateKey, defaultState) {
     const { finished } = startViewTransition(() => {
       batch(() => Object.assign(state, { ...defaultState, ...newState }))
       history.pushState({ ...history.state, [stateKey]: toRaw(state, true) }, '')
+      window.scrollTo(0, 0)
     })
     resolvers = abortable(finished)
   }

@@ -1,5 +1,5 @@
 <script type="module">
-  import { batch, defineComponent, onCleanup, reactive } from 'elii'
+  import { batch, createMemo, defineComponent, onCleanup, reactive } from 'elii'
   import {
     blockWidth,
     blockHeight,
@@ -40,18 +40,28 @@
 
       let oldSelectedBlockId = ''
 
-      const lines = Object.values(props.board.lines)
-      const linesMinX = lines.reduce((min, line) => Math.min(min, line.x), Infinity)
-      const linesMinY = lines.reduce((min, line) => Math.min(min, line.y), Infinity)
-      const linesMaxX = lines.reduce((max, line) => Math.max(max, line.x + blockWidth + linePaddingSide * 2), 0)
-      const linesMaxY = lines.reduce((max, line) => {
-        const lineHeight = blockHeight * line.size - blockOverlap * (line.size - 1) + linePaddingTop + linePaddingBottom
-        return Math.max(max, line.y + lineHeight)
-      }, 0)
-      const boardWidth = linesMaxX + linesMinX
-      const boardHeight = linesMaxY + linesMinY
-      const boardScaleX = 100 / boardWidth
-      const boardScaleY = 100 / boardHeight
+      const memo = createMemo(() => {
+        const lines = Object.values(props.board.lines)
+        const linesMinX = lines.reduce((min, line) => Math.min(min, line.x), Infinity)
+        const linesMinY = lines.reduce((min, line) => Math.min(min, line.y), Infinity)
+        const linesMaxX = lines.reduce((max, line) => Math.max(max, line.x + blockWidth + linePaddingSide * 2), 0)
+        const linesMaxY = lines.reduce((max, line) => {
+          const lineHeight =
+            blockHeight * line.size - blockOverlap * (line.size - 1) + linePaddingTop + linePaddingBottom
+          return Math.max(max, line.y + lineHeight)
+        }, 0)
+        const boardWidth = linesMaxX + linesMinX
+        const boardHeight = linesMaxY + linesMinY
+        const boardScaleX = 100 / boardWidth
+        const boardScaleY = 100 / boardHeight
+
+        return {
+          boardWidth,
+          boardHeight,
+          boardScaleX,
+          boardScaleY,
+        }
+      })
 
       const restart = () => {
         state.isReady = false
@@ -68,8 +78,8 @@
       const lineFromPoint = (clientX, clientY) => {
         const boardRect = state.refBoard?.getBoundingClientRect()
         if (boardRect) {
-          const pointerX = ((clientX - boardRect.left) / boardRect.width) * boardWidth
-          const pointerY = ((clientY - boardRect.top) / boardRect.height) * boardHeight
+          const pointerX = ((clientX - boardRect.left) / boardRect.width) * memo.boardWidth
+          const pointerY = ((clientY - boardRect.top) / boardRect.height) * memo.boardHeight
 
           for (const line of Object.values(props.board.lines)) {
             const lineH = calcLineHeight(line.size)
@@ -205,18 +215,15 @@
       }
 
       return {
-        props,
         images,
+        props,
         state,
+        memo,
         blockWidth,
         blockHeight,
         blockOverlap,
         linePaddingSide,
         linePaddingTop,
-        boardWidth,
-        boardHeight,
-        boardScaleX,
-        boardScaleY,
         onLinePointerDown,
         onBlockPointerDown,
         $expose: {
@@ -228,19 +235,19 @@
 </script>
 
 <template>
-  <div class="board" data-style-aspect-ratio="`${boardWidth} / ${boardHeight}`" data-ref="state.refBoard">
+  <div class="board" data-style-aspect-ratio="`${memo.boardWidth} / ${memo.boardHeight}`" data-ref="state.refBoard">
     <div
       class="board-bg"
-      data-style-background-position-y="`calc(100vh + ${linePaddingTop * boardScaleY}cqh)`"
-      data-style-background-size="`${(blockWidth + linePaddingSide * 2) * boardScaleX * 2}cqw ${(blockHeight - blockOverlap) * boardScaleY * 2}cqh`"
+      data-style-background-position-y="`calc(100vh + ${linePaddingTop * memo.boardScaleY}cqh)`"
+      data-style-background-size="`${(blockWidth + linePaddingSide * 2) * memo.boardScaleX * 2}cqw ${(blockHeight - blockOverlap) * memo.boardScaleY * 2}cqh`"
     ></div>
 
     <template data-for="line in Object.values(props.board.lines)" data-key="line.id">
       <play-line
         data-prop-line-id="line.id"
         data-prop-board="props.board"
-        data-prop-board-scale-x="boardScaleX"
-        data-prop-board-scale-y="boardScaleY"
+        data-prop-board-scale-x="memo.boardScaleX"
+        data-prop-board-scale-y="memo.boardScaleY"
         data-prop-selected-block-id="state.selectedBlockId"
         data-prop-drag-info="state.dragInfo"
         data-prop-hover-line-id="state.hoverLineId"
@@ -252,8 +259,8 @@
       <play-block
         data-prop-block-id="block.id"
         data-prop-board="props.board"
-        data-prop-board-scale-x="boardScaleX"
-        data-prop-board-scale-y="boardScaleY"
+        data-prop-board-scale-x="memo.boardScaleX"
+        data-prop-board-scale-y="memo.boardScaleY"
         data-prop-is-ready="state.isReady"
         data-prop-selected-block-id="state.selectedBlockId"
         data-prop-drag-info="state.dragInfo"
@@ -265,12 +272,15 @@
 
 <style>
   :host {
-    display: contents;
+    display: block;
   }
 
   .board {
+    margin: 0 auto;
     position: relative;
     container-type: size;
+    max-height: 80vh;
+    max-height: 80dvh;
     z-index: 1;
   }
 

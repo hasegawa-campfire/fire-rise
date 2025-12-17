@@ -13,7 +13,7 @@ export const runtime = reactive({
 export const prefs = createLocalStorageState(storeKey, {
   volumeBgm: 0.5,
   volumeSe: 0.5,
-  seenHelps: /** @type {Record<string, true>} */ ({}),
+  seenHelps: /** @type {Record<string, boolean>} */ ({}),
   levelStats: /** @type {Record<string, LevelStats>} */ ({}),
   seenCompleted: false,
 })
@@ -78,6 +78,7 @@ export const images = {
     circle: new URL('./assets/icon-circle.svg', import.meta.url).href,
     arrowLeft: new URL('./assets/icon-arrow-left.svg', import.meta.url).href,
     arrowRight: new URL('./assets/icon-arrow-right.svg', import.meta.url).href,
+    finger: new URL('./assets/icon-finger.svg', import.meta.url).href,
   },
 }
 

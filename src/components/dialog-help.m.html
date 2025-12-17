@@ -1,13 +1,14 @@
 <script type="module">
-  import { createMemo, defineComponent, reactive } from 'elii'
+  import { createMemo, defineComponent, reactive, untrack } from 'elii'
   import { images, prefs, se } from '@/r.js'
+  import { blockWidth, blockHeight } from '@/rule/board-utils.js'
 
   import XDialog from './x-dialog.m.html'
   import './x-text.m.html'
   import './x-button.m.html'
   import './x-icon.m.html'
 
-  const pageIds = ['about', 'basic', 'move', 'menu', 'outro']
+  const pageIds = ['about', 'basic', 'move', 'menu', 'save', 'ex', 'stack', 'outro']
 
   export default defineComponent({
     tag: 'dialog-help',
@@ -15,7 +16,7 @@
     setup() {
       const state = reactive({
         refDialog: /** @type {XDialog | null} */ (null),
-        pageIndex: 0,
+        pageIndex: -1,
         pageIds: /** @type {string[]} */ ([]),
       })
 
@@ -34,15 +35,19 @@
         } else {
           // 通常表示
           prefs.seenHelps[pageId] = true
-          state.pageIds = pageIds.filter((id) => prefs.seenHelps[id])
+          state.pageIds = pageIds.filter((id) => prefs.seenHelps[id] != null)
           state.pageIndex = state.pageIds.indexOf(pageId)
           state.refDialog?.open()
         }
       }
 
       const memo = createMemo(() => {
+        const pageId = state.pageIds[state.pageIndex]
+        untrack(() => {
+          if (pageId) prefs.seenHelps[pageId] = true
+        })
         return {
-          currentPageId: state.pageIds[state.pageIndex],
+          currentPageId: pageId ?? '',
           totalPages: state.pageIds.length,
         }
       })
@@ -72,6 +77,8 @@
       }
 
       return {
+        blockWidth,
+        blockHeight,
         images,
         state,
         memo,
@@ -118,33 +125,74 @@
         <div class="page" data-class-current="memo.currentPageId === 'basic'">
           <x-text class="title" value="あそびかた"></x-text>
           <p>たきびさん</p>
+          <div class="block-preview" data-style-aspect-ratio="blockWidth / blockHeight">
+            <img class="block-image" data-prop-src="images.takibi.leg.black" />
+            <img class="block-image" data-prop-src="images.takibi.bg.black" />
+            <img class="block-image" data-prop-src="images.takibi.body.red" />
+            <img class="block-image" data-prop-src="images.takibi.face.default" />
+            <x-icon class="move-icon" data-prop-svg-url="images.icon.finger"></x-icon>
+          </div>
           <p>を</p>
-          <p>まとめよう！</p>
+          <p>　まとめよう！</p>
         </div>
       </template>
 
       <template data-if="state.pageIds.includes('move')">
         <div class="page" data-class-current="memo.currentPageId === 'move'">
           <x-text class="title" value="いどうルール"></x-text>
-          <p>上におけるのは<br />おなじ色か、あいた列だけ</p>
+          <p>たきびさんが行けるのは<br />おなじ色の上か<br />あいた列だけ</p>
           <p>高さにもちゅうい</p>
         </div>
       </template>
 
       <template data-if="state.pageIds.includes('menu')">
         <div class="page" data-class-current="memo.currentPageId === 'menu'">
-          <x-text class="title" value="こまった時は？"></x-text>
-          <p>元にもどします</p>
+          <x-text class="title" value="こまったときは"></x-text>
+          <div class="icon-preview">
+            <x-icon data-prop-svg-url="images.icon.undo"></x-icon>
+          </div>
+          <p>ひとつ前にもどします</p>
+          <div class="icon-preview">
+            <x-icon data-prop-svg-url="images.icon.restart"></x-icon>
+          </div>
           <p>あたらしくやり直します</p>
+        </div>
+      </template>
+
+      <template data-if="state.pageIds.includes('save')">
+        <div class="page" data-class-current="memo.currentPageId === 'save'">
+          <x-text class="title" value="レベルのセーブ"></x-text>
+          <p>とちゅうでやめても<br />もんだいはセーブされています</p>
+          <p>クリアしたり<br />あたらしくやり直すまで<br />かわりません</p>
+          <div class="icon-preview">
+            <x-icon data-prop-svg-url="images.icon.restart"></x-icon>
+          </div>
+        </div>
+      </template>
+
+      <template data-if="state.pageIds.includes('ex')">
+        <div class="page" data-class-current="memo.currentPageId === 'ex'">
+          <x-text class="title" value="Ex"></x-text>
+          <p>あいたままで<br />おわる列はナシ</p>
+          <p>上にスキマができます</p>
+        </div>
+      </template>
+
+      <template data-if="state.pageIds.includes('stack')">
+        <div class="page" data-class-current="memo.currentPageId === 'stack'">
+          <x-text class="title" value="かさね"></x-text>
+          <p>とてもむずかしい</p>
+          <p>もし<br />かずの多い色があったら<br />それは下のほうへ</p>
         </div>
       </template>
 
       <template data-if="state.pageIds.includes('outro')">
         <div class="page" data-class-current="memo.currentPageId === 'outro'">
           <x-text class="title" value="すべて"></x-text>
-          <p>なにが出るのか<br />きぶんしだい</p>
-          <p>Streakがふえるほど<br />むずかしくなります</p>
+          <p>なにが出るのか、きぶんしだい</p>
+          <p>Streakがふえるほど<br />むずかしめに</p>
           <br />
+          <p class="outro-title">GAME OVER</p>
           <p class="outro-text">
             <template data-for="char, index in Array.from('THANK YOU FOR PLAYING!')">
               <span class="outro-char" data-style--index="index" data-text="char"></span>
@@ -206,10 +254,6 @@
     color: gold;
   }
 
-  .sub-title {
-    margin: 16px 0;
-  }
-
   p {
     margin: 12px 0;
     font-size: 18px;
@@ -236,7 +280,45 @@
     color: darkorange;
   }
 
+  .block-preview {
+    position: relative;
+    width: 64px;
+    margin: 0 auto;
+  }
+
+  .block-image {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+
+  .move-icon {
+    position: absolute;
+    left: 75%;
+    top: -5%;
+    transform: rotate(-45deg);
+  }
+
+  .icon-preview {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .hint-title {
+    margin: 16px 0;
+    text-align: center;
+    color: #fff;
+    font-size: 20px;
+  }
+
+  .outro-title {
+    margin-bottom: 0;
+  }
+
   .outro-text {
+    margin-top: 0;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -246,17 +328,18 @@
     white-space: pre;
 
     .current & {
-      animation: outro-char-animation 4s calc(var(--index) * 0.07s) linear infinite;
+      animation: outro-char-jump 4s calc(var(--index) * 0.07s) linear infinite,
+        outro-char-fade 4s calc(var(--index) * 0.07s) linear backwards;
     }
   }
 
-  @keyframes outro-char-animation {
+  @keyframes outro-char-jump {
     0% {
       transform: translateY(0px);
       animation-timing-function: ease-out;
     }
     4% {
-      transform: translateY(-0.7em);
+      transform: translateY(-0.5em);
       animation-timing-function: ease-in;
     }
     8% {
@@ -265,6 +348,18 @@
     }
     100% {
       transform: translateY(0px);
+    }
+  }
+
+  @keyframes outro-char-fade {
+    0% {
+      opacity: 0;
+    }
+    4% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 1;
     }
   }
 
@@ -281,6 +376,10 @@
     align-items: center;
     justify-content: center;
     gap: 8px;
+
+    @media (width <= 460px) {
+      gap: 6px;
+    }
   }
 
   .page-nav-dot {
@@ -288,7 +387,7 @@
     height: 10px;
     border-radius: 50%;
     background-color: #aaa;
-    border: 3px solid transparent;
+    border: calc(var(--border-width) * 0.75) solid transparent;
     background-clip: content-box;
     cursor: pointer;
 

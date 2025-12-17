@@ -25,13 +25,10 @@
       hoverLineId: '',
     },
     setup(props) {
-      const lineIndex = Object.keys(props.board.lines).indexOf(props.lineId)
-
-      const line = props.board.lines[props.lineId]
-      const blocksHeight = calcBlocksHeight(line.size)
-
       const memo = createMemo(() => {
         const line = props.board.lines[props.lineId]
+        const lineHeight = calcLineHeight(line.size)
+        const blocksHeight = calcBlocksHeight(line.size)
 
         const selectedBlock = props.selectedBlockId ? props.board.blocks[props.selectedBlockId] : null
         const isSelectable = !!selectedBlock && isMovableBlock(props.board, line, selectedBlock)
@@ -41,6 +38,7 @@
 
         return {
           line,
+          lineHeight,
           selectedColor: selectedBlock ? blockFillColors[selectedBlock.color] : '',
           isSelectable,
           isDroppable: isSelectable && props.hoverLineId === props.lineId && !!props.dragInfo,
@@ -52,9 +50,7 @@
         props,
         memo,
         linePaddingBottom,
-        lineIndex,
         lineWidth,
-        lineHeight: calcLineHeight(line.size),
       }
     },
   })
@@ -68,14 +64,14 @@
     data-style-left="`${memo.line.x * props.boardScaleX}cqw`"
     data-style-top="`${memo.line.y * props.boardScaleY}cqh`"
     data-style-width="`${lineWidth * props.boardScaleX}cqw`"
-    data-style-height="`${lineHeight * props.boardScaleY}cqh`"
+    data-style-height="`${memo.lineHeight * props.boardScaleY}cqh`"
   >
     <div class="line-bg"></div>
     <div class="line-shadow"></div>
     <div
       class="line-bottom"
       data-class-fell="memo.line.blockIds.length === 0 && props.board.disableEmptyDrop"
-      data-class-even="lineIndex % 2 === 0"
+      data-class-even="memo.line.even"
       data-style-height="`${linePaddingBottom * props.boardScaleY}cqh`"
     ></div>
     <div

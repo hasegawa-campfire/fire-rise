@@ -57,6 +57,10 @@
       route.onReady(() => {
         bgm.play.play(0.2)
 
+        if (level.silentHelpPageId && prefs.seenHelps[level.silentHelpPageId] == null) {
+          prefs.seenHelps[level.silentHelpPageId] = false
+        }
+
         if (level.helpPageId && !prefs.seenHelps[level.helpPageId]) {
           state.refHelp?.open([level.helpPageId])
         }
@@ -147,7 +151,7 @@
         state,
         level,
         levelStats,
-        helpPageId: level.helpPageId ?? 'basic',
+        helpPageId: (level.helpPageId || level.silentHelpPageId) ?? 'basic',
         goToTitle,
         confirmRestart,
         undo,
@@ -162,11 +166,11 @@
     <x-button slot="left" shadow data-on-click="goToTitle">
       <x-icon data-prop-svg-url="images.icon.back"></x-icon>
     </x-button>
-    <div slot="center" class="level-info">
+    <div slot="center" class="level-info" data-class-visible="!state.isVisibleLevelStats">
       <div class="level-display-id" data-text="level.displayId"></div>
       <x-text class="level-name" data-prop-value="level.name"></x-text>
     </div>
-    <div slot="right" class="level-stats" data-prop-hidden="!state.isVisibleLevelStats">
+    <div slot="right" class="level-stats" data-class-visible="state.isVisibleLevelStats">
       <div class="level-stats-name">Wins:</div>
       <div class="level-stats-value" data-text="levelStats.wins"></div>
       <div class="level-stats-name">Streak:</div>
@@ -264,7 +268,9 @@
     white-space: nowrap;
 
     @media (width <= 420px) {
-      display: none;
+      &:not(.visible) {
+        display: none;
+      }
     }
   }
 
@@ -294,6 +300,10 @@
     margin: 0 auto;
     filter: drop-shadow(0px 3px 0 #0002);
 
+    @media (width <= 600px) {
+      font-size: 22px;
+    }
+
     @media (width <= 520px) {
       font-size: 4cqw;
     }
@@ -314,6 +324,12 @@
 
     @media (width <= 375px) {
       font-size: 10px;
+    }
+
+    @media (width <= 420px) {
+      &:not(.visible) {
+        display: none;
+      }
     }
   }
 

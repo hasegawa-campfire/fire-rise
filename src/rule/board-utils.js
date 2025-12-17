@@ -1,14 +1,14 @@
 import { mapEntries } from '@/lib/utils.js'
 import { createRandom } from '@/lib/random.js'
 
-const random = createRandom()
+export const random = createRandom()
 
 /**
  * @template T
  * @param {T[]} array
  * @returns {T[]}
  */
-function shuffleArray(array) {
+export function shuffleArray(array) {
   const clonedArray = array.slice()
   return array.map(() => {
     const index = Math.floor(random.next() * clonedArray.length)

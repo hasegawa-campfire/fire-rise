@@ -103,20 +103,20 @@
       /**
        * @param {TransitionEvent} e
        */
-      const onTransitionEnd = (e) => {
+      const onTransitionStart = (e) => {
         if (e.target !== e.currentTarget) return
-        if (props.selectedBlockId !== selectedBlockId) {
-          selectedBlockId = ''
-        }
+        if (memo.isSelected) return
+        se.move.play()
       }
 
       /**
        * @param {TransitionEvent} e
        */
-      const onTransitionStart = (e) => {
+      const onTransitionEnd = (e) => {
         if (e.target !== e.currentTarget) return
-        if (memo.isSelected) return
-        se.move.play()
+        if (props.selectedBlockId !== selectedBlockId) {
+          selectedBlockId = ''
+        }
       }
 
       return {
@@ -130,8 +130,8 @@
         blockOverlap,
         linePaddingSide,
         linePaddingTop,
-        onTransitionEnd,
         onTransitionStart,
+        onTransitionEnd,
       }
     },
   })
