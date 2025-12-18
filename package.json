@@ -6,18 +6,29 @@
   "main": "index.js",
   "scripts": {
     "serve": "http-server -p 3001 src",
-    "serve:ssl": "http-server -p 3001 src -S -C ./localhost+3.pem -K ./localhost+3-key.pem",
-    "updates": "ncu -c 3 -i"
+    "serve:ssl": "http-server -p 3002 src -S -C ./localhost+3.pem -K ./localhost+3-key.pem",
+    "updates": "ncu -c 3 -i",
+    "prebuild": "rm -rf dist",
+    "build": "node build.mjs",
+    "preview": "http-server -p 3003 dist"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@craftamap/esbuild-plugin-html": "^0.9.0",
     "@types/dom-chromium-ai": "^0.0.11",
     "@types/node": "^24.10.1",
-    "@types/serviceworker": "^0.0.167",
-    "npm-check-updates": "^19.1.2",
+    "@types/serviceworker": "^0.0.168",
+    "cheerio": "^1.1.2",
+    "esbuild": "^0.27.2",
+    "esbuild-plugin-copy": "^2.1.1",
+    "html-minifier-next": "^4.11.1",
+    "html-modules": "file:src/local_modules/html-modules",
     "http-server": "^14.1.1",
-    "ts-html-modules-plugin": "file:src/local_modules/ts-html-modules-plugin",
+    "npm-check-updates": "^19.2.0",
     "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "elii": "file:src/local_modules/elii"
   }
 }

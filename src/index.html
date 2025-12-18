@@ -2,19 +2,39 @@
 <html lang="ja">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="viewport"
+      content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1"
+    />
     <title>FireRise</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=M+PLUS+1p:wght@400;700;900&display=swap" rel="stylesheet" />
-    <script type="importmap">
+    <script type="importmap" data-prod-remove>
       {
         "imports": {
+          "elii": "./local_modules/elii/index.js",
+          "package.json": "./package-dummy.js",
           "@/": "./",
-          "elii": "./local_modules/elii/index.js"
+          "@/lib/asset.js": "./lib/asset.dev.js"
         }
       }
     </script>
+    <link rel="icon" href="./static/favicon.ico" sizes="any" />
+    <link rel="icon" href="./static/favicon-192.png" type="image/png" />
+    <link rel="apple-touch-icon" href="./static/favicon-apple-touch-icon.png" />
+    <link rel="manifest" href="./manifest.json" />
+    <meta name="description" content="焚き火さんをまとめて積み上げて！火力上昇パズルゲームです" />
+    <meta name="keywords" content="FireRise, パズル, ゲーム" />
+    <link rel="canonical" href="https://hasegawa-campfire.github.io/fire-rise/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://hasegawa-campfire.github.io/fire-rise/" />
+    <meta property="og:title" content="FireRise" />
+    <meta property="og:site_name" content="FireRise" />
+    <meta property="og:description" content="焚き火さんをまとめて積み上げて！火力上昇パズルゲームです" />
+    <meta property="og:image" content="https://hasegawa-campfire.github.io/fire-rise/static/ogp.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@hsgwkt" />
     <style>
       [hidden] {
         display: none !important;
@@ -46,11 +66,11 @@
         -webkit-tap-highlight-color: transparent;
         touch-action: manipulation;
         cursor: default;
+      }
 
-        &:not(.ready) {
-          overflow: hidden;
-          overscroll-behavior: none;
-        }
+      body:not(.ready) {
+        overflow: hidden;
+        overscroll-behavior: none;
       }
 
       ::view-transition {
@@ -84,25 +104,34 @@
           opacity: 1;
         }
       }
+
+      app-root + h2 {
+        display: none;
+      }
     </style>
   </head>
   <body>
     <app-root></app-root>
+    <h2>ご利用のブラウザはサポートされていません</h2>
 
-    <script type="module">
-      try {
-        await navigator.serviceWorker.register('./sw.js')
-
-        if (!navigator.serviceWorker.controller) {
-          await new Promise((resolve) => {
-            navigator.serviceWorker.addEventListener('controllerchange', resolve, { once: true })
-          })
-        }
-
-        await import('./main.js')
-      } catch (error) {
-        console.error('[HTML Modules] Initialization failed:', error)
+    <script type="module" data-prod-remove>
+      await navigator.serviceWorker.register('./sw.dev.js', { type: 'module' })
+      if (!navigator.serviceWorker.controller) {
+        await new Promise((resolve) => {
+          navigator.serviceWorker.addEventListener('controllerchange', resolve, { once: true })
+        })
       }
+      await import('./main.js')
     </script>
+
+    <template data-prod-expand>
+      <script>
+        if (CSS.supports && CSS.supports('selector(&)')) {
+          navigator.serviceWorker.register('sw.js')
+        } else {
+          document.querySelector('app-root').remove()
+        }
+      </script>
+    </template>
   </body>
 </html>

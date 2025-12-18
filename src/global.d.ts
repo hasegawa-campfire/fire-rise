@@ -63,3 +63,6 @@ interface LevelStats {
   highestStreak: number
   seed: number | null
 }
+
+declare const CACHE_PATTERNS: string[]
+declare const ASSET_FILES: [string, [number, number]][]

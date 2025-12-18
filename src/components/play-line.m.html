@@ -171,9 +171,9 @@
     width: 20px;
     height: 20px;
     background-color: currentColor;
-    border: #444 4px solid;
-    border-radius: 0.25em;
-    box-shadow: 0 0 0 4px #fff;
+    border: #444 var(--border-width) solid;
+    border-radius: var(--border-width);
+    box-shadow: 0 0 0 var(--border-width) #fff;
     clip-path: polygon(-49% -50%, 151% 150%, -49% 150%);
     transform: translate(-50%, -100%) rotate(-45deg);
   }
@@ -181,14 +181,14 @@
   .selectable-marker-top {
     position: absolute;
     left: 0px;
-    top: -4px;
+    top: calc(var(--border-width) * -1);
     width: calc(20px * 1.414);
     height: 20px;
     background-color: currentColor;
-    border: #444 4px solid;
-    border-radius: 0.25em;
-    box-shadow: 0 0 0 4px #fff;
-    clip-path: polygon(-50% -50%, 150% -50%, 150% 4px, -50% 4px);
+    border: #444 var(--border-width) solid;
+    border-radius: var(--border-width);
+    box-shadow: 0 0 0 var(--border-width) #fff;
+    clip-path: polygon(-50% -50%, 150% -50%, 150% var(--border-width), -50% var(--border-width));
     transform: translate(-50%, -50%);
   }
 </style>

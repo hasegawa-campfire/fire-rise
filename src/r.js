@@ -1,6 +1,6 @@
 import { reactive } from 'elii'
 import { createLocalStorageState, createSessionStorageState } from '@/lib/state.js'
-import { loadBin } from '@/lib/bin.js'
+import { loadAsset, loadAssetUrl } from '@/lib/asset.js'
 import { Audio, setCategoryVolume, setMasterVolume } from '@/lib/audio.js'
 import { createRouteState } from './lib/route-state.js'
 
@@ -29,84 +29,81 @@ export const route = createRouteState(storeKey, {
 export const images = {
   takibi: {
     leg: {
-      orange: new URL('./assets/takibi-leg-orange.png', import.meta.url).href,
-      white: new URL('./assets/takibi-leg-white.png', import.meta.url).href,
-      black: new URL('./assets/takibi-leg-black.png', import.meta.url).href,
+      orange: loadAssetUrl('images/takibi-leg-orange.png'),
+      white: loadAssetUrl('images/takibi-leg-white.png'),
+      black: loadAssetUrl('images/takibi-leg-black.png'),
     },
     bg: {
-      orange: new URL('./assets/takibi-bg-orange.png', import.meta.url).href,
-      white: new URL('./assets/takibi-bg-white.png', import.meta.url).href,
-      black: new URL('./assets/takibi-bg-black.png', import.meta.url).href,
+      orange: loadAssetUrl('images/takibi-bg-orange.png'),
+      white: loadAssetUrl('images/takibi-bg-white.png'),
+      black: loadAssetUrl('images/takibi-bg-black.png'),
     },
     face: {
-      default: new URL('./assets/takibi-face-default.png', import.meta.url).href,
-      success: new URL('./assets/takibi-face-success.png', import.meta.url).href,
-      failure: new URL('./assets/takibi-face-failure.png', import.meta.url).href,
-      red: new URL('./assets/takibi-face-red.png', import.meta.url).href,
-      blue: new URL('./assets/takibi-face-blue.png', import.meta.url).href,
-      yellow: new URL('./assets/takibi-face-yellow.png', import.meta.url).href,
-      green: new URL('./assets/takibi-face-green.png', import.meta.url).href,
-      orange: new URL('./assets/takibi-face-orange.png', import.meta.url).href,
-      pink: new URL('./assets/takibi-face-pink.png', import.meta.url).href,
-      purple: new URL('./assets/takibi-face-purple.png', import.meta.url).href,
-      gray: new URL('./assets/takibi-face-gray.png', import.meta.url).href,
+      default: loadAssetUrl('images/takibi-face-default.png'),
+      success: loadAssetUrl('images/takibi-face-success.png'),
+      failure: loadAssetUrl('images/takibi-face-failure.png'),
+      red: loadAssetUrl('images/takibi-face-red.png'),
+      blue: loadAssetUrl('images/takibi-face-blue.png'),
+      yellow: loadAssetUrl('images/takibi-face-yellow.png'),
+      green: loadAssetUrl('images/takibi-face-green.png'),
+      orange: loadAssetUrl('images/takibi-face-orange.png'),
+      pink: loadAssetUrl('images/takibi-face-pink.png'),
+      purple: loadAssetUrl('images/takibi-face-purple.png'),
+      gray: loadAssetUrl('images/takibi-face-gray.png'),
     },
     body: {
-      red: new URL('./assets/takibi-body-red.png', import.meta.url).href,
-      blue: new URL('./assets/takibi-body-blue.png', import.meta.url).href,
-      yellow: new URL('./assets/takibi-body-yellow.png', import.meta.url).href,
-      green: new URL('./assets/takibi-body-green.png', import.meta.url).href,
-      orange: new URL('./assets/takibi-body-orange.png', import.meta.url).href,
-      pink: new URL('./assets/takibi-body-pink.png', import.meta.url).href,
-      purple: new URL('./assets/takibi-body-purple.png', import.meta.url).href,
-      gray: new URL('./assets/takibi-body-gray.png', import.meta.url).href,
+      red: loadAssetUrl('images/takibi-body-red.png'),
+      blue: loadAssetUrl('images/takibi-body-blue.png'),
+      yellow: loadAssetUrl('images/takibi-body-yellow.png'),
+      green: loadAssetUrl('images/takibi-body-green.png'),
+      orange: loadAssetUrl('images/takibi-body-orange.png'),
+      pink: loadAssetUrl('images/takibi-body-pink.png'),
+      purple: loadAssetUrl('images/takibi-body-purple.png'),
+      gray: loadAssetUrl('images/takibi-body-gray.png'),
     },
   },
-  wave: new URL('./assets/wave.png', import.meta.url).href,
-  halfTone: new URL('./assets/half-tone.png', import.meta.url).href,
-  star: new URL('./assets/star.png', import.meta.url).href,
-  boardBg: new URL('./assets/board-bg.png', import.meta.url).href,
+  wave: loadAssetUrl('images/wave.png'),
+  halfTone: loadAssetUrl('images/half-tone.png'),
+  star: loadAssetUrl('images/star.png'),
+  boardBg: loadAssetUrl('images/board-bg.png'),
   icon: {
-    audioOn: new URL('./assets/icon-audio-on.svg', import.meta.url).href,
-    audioOff: new URL('./assets/icon-audio-off.svg', import.meta.url).href,
-    help: new URL('./assets/icon-help.svg', import.meta.url).href,
-    back: new URL('./assets/icon-back.svg', import.meta.url).href,
-    close: new URL('./assets/icon-close.svg', import.meta.url).href,
-    lock: new URL('./assets/icon-lock.svg', import.meta.url).href,
-    undo: new URL('./assets/icon-undo.svg', import.meta.url).href,
-    restart: new URL('./assets/icon-restart.svg', import.meta.url).href,
-    circle: new URL('./assets/icon-circle.svg', import.meta.url).href,
-    arrowLeft: new URL('./assets/icon-arrow-left.svg', import.meta.url).href,
-    arrowRight: new URL('./assets/icon-arrow-right.svg', import.meta.url).href,
-    finger: new URL('./assets/icon-finger.svg', import.meta.url).href,
+    audioOn: loadAssetUrl('images/icon-audio-on.svg'),
+    audioOff: loadAssetUrl('images/icon-audio-off.svg'),
+    help: loadAssetUrl('images/icon-help.svg'),
+    back: loadAssetUrl('images/icon-back.svg'),
+    close: loadAssetUrl('images/icon-close.svg'),
+    lock: loadAssetUrl('images/icon-lock.svg'),
+    undo: loadAssetUrl('images/icon-undo.svg'),
+    restart: loadAssetUrl('images/icon-restart.svg'),
+    circle: loadAssetUrl('images/icon-circle.svg'),
+    arrowLeft: loadAssetUrl('images/icon-arrow-left.svg'),
+    arrowRight: loadAssetUrl('images/icon-arrow-right.svg'),
+    finger: loadAssetUrl('images/icon-finger.svg'),
   },
 }
 
 export const bgm = {
-  title: new Audio(loadBin('bgm/title.mp3'), {
+  title: new Audio(loadAsset('bgm/title.mp3'), {
     category: 'bgm',
-    volume: 0.22,
+    volume: 0.2,
     loop: true,
   }),
-  play: new Audio(loadBin('bgm/play.mp3'), {
+  play: new Audio(loadAsset('bgm/play.mp3'), {
     category: 'bgm',
-    volume: 0.3,
-    loop: true,
-    // loop: {
-    //   start: 10.578,
-    //   end: 69.354,
-    // },
+    volume: 0.35,
+    loop: {
+      start: 19.825,
+    },
   }),
 }
 
 export const se = {
-  clear: new Audio(loadBin('se/clear.mp3'), { category: 'se', volume: 0.8 }),
-  click: new Audio(loadBin('se/click.mp3'), { category: 'se', volume: 0.8 }),
-  move: new Audio(loadBin('se/move.wav'), { category: 'se', volume: 0.6, minTime: 0.05 }),
-  start: new Audio(loadBin('se/start.mp3'), { category: 'se', volume: 0.9 }),
-  fire: new Audio(loadBin('se/fire.mp3'), { category: 'se', volume: 0.3 }),
+  clear: new Audio(loadAsset('se/clear.mp3'), { category: 'se', volume: 0.3 }),
+  click: new Audio(loadAsset('se/click.mp3'), { category: 'se', volume: 0.8 }),
+  move: new Audio(loadAsset('se/move.mp3'), { category: 'se', volume: 0.5, minTime: 0.05 }),
+  start: new Audio(loadAsset('se/start.mp3'), { category: 'se', volume: 0.9 }),
 }
 
-setMasterVolume(0.7)
+setMasterVolume(1)
 setCategoryVolume('bgm', prefs.volumeBgm)
 setCategoryVolume('se', prefs.volumeSe)

@@ -55,7 +55,7 @@ export function setCategoryVolume(category, value) {
  * @property {number} [volume]
  * @property {number} [minTime]
  * @property {number} [delay]
- * @property {boolean | { start: number, end: number }} [loop]
+ * @property {boolean | { start?: number, end?: number }} [loop]
  */
 
 export class Audio {
@@ -128,7 +128,7 @@ export class Audio {
     } else {
       audioSource.loop = true
       audioSource.loopStart = this.#loop.start ?? 0
-      audioSource.loopEnd = this.#loop.end ?? 0
+      audioSource.loopEnd = this.#loop.end ?? audioBuffer.duration
     }
 
     audioSource.buffer = audioBuffer

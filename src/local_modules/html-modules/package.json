@@ -1,0 +1,24 @@
+{
+  "name": "html-modules",
+  "version": "1.0.0",
+  "description": "HTML Modules (.m.html) utilities",
+  "exports": {
+    "./esbuild-plugin": "./esbuild-plugin/index.mjs",
+    "./sw-util": "./sw-util/index.js",
+    "./ts-plugin": "./ts-plugin/index.js",
+    "./util": "./util.js"
+  },
+  "keywords": [
+    "esbuild",
+    "typescript",
+    "service-worker",
+    "plugin",
+    "html-modules",
+    "language-service"
+  ],
+  "author": "",
+  "license": "ISC",
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

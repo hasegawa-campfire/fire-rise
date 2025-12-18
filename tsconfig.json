@@ -4,16 +4,16 @@
     "module": "esnext",
     "lib": ["ESNext", "DOM", "DOM.Iterable"],
     "moduleResolution": "node",
+    "resolveJsonModule": true,
     "strict": true,
     "allowJs": true,
     "checkJs": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"],
-      "elii": ["./src/local_modules/elii/index.js"]
+      "@/*": ["./src/*"]
     },
     "outDir": "./dist",
-    "plugins": [{ "name": "ts-html-modules-plugin" }]
+    "plugins": [{ "name": "html-modules/ts-plugin" }]
   },
-  "include": ["src/**/*.m.html", "src/**/*.js", "src/**/*.ts"]
+  "include": ["src/**/*.m.html", "src/**/*.js", "src/**/*.ts" /*, "build.js"*/]
 }
