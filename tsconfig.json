@@ -15,5 +15,5 @@
     "outDir": "./dist",
     "plugins": [{ "name": "html-modules/ts-plugin" }]
   },
-  "include": ["src/**/*.m.html", "src/**/*.js", "src/**/*.ts" /*, "build.js"*/]
+  "include": ["src/**/*.m.html", "src/**/*.js", "src/**/*.ts"]
 }
