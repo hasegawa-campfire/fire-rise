@@ -9,7 +9,7 @@
   import './x-button.m.html'
   import './x-icon.m.html'
 
-  const pageIds = ['about', 'basic', 'move', 'menu', 'save', 'ex', 'stack', 'outro']
+  const pageIds = ['about', 'basic', 'move', 'menu', 'ex', 'stack', 'outro']
 
   export default defineComponent({
     tag: 'dialog-help',
@@ -163,17 +163,6 @@
         </div>
       </template>
 
-      <template data-if="state.pageIds.includes('save')">
-        <div class="page" data-class-current="memo.currentPageId === 'save'">
-          <x-text class="title" value="レベルのセーブ"></x-text>
-          <p>とちゅうでやめても<br />もんだいは、のこっています</p>
-          <p>クリアしたり<br />あたらしくやり直すまで<br />かわりません</p>
-          <div class="icon-preview">
-            <x-icon data-prop-svg-url="images.icon.restart"></x-icon>
-          </div>
-        </div>
-      </template>
-
       <template data-if="state.pageIds.includes('ex')">
         <div class="page" data-class-current="memo.currentPageId === 'ex'">
           <x-text class="title" value="Ex"></x-text>
@@ -209,7 +198,7 @@
     <template data-if="memo.totalPages > 1">
       <div class="page-nav">
         <x-button data-on-click="prevPage">
-          <x-icon color="darkorange" data-prop-svg-url="images.icon.arrowLeft"></x-icon>
+          <x-icon data-prop-svg-url="images.icon.arrowLeft"></x-icon>
         </x-button>
 
         <div class="page-nav-dots">
@@ -223,7 +212,7 @@
         </div>
 
         <x-button data-on-click="nextPage">
-          <x-icon color="darkorange" data-prop-svg-url="images.icon.arrowRight"></x-icon>
+          <x-icon data-prop-svg-url="images.icon.arrowRight"></x-icon>
         </x-button>
       </div>
     </template>
@@ -412,5 +401,9 @@
       background-position: center;
       pointer-events: none;
     }
+  }
+
+  x-button {
+    color: darkorange;
   }
 </style>

@@ -120,6 +120,20 @@
     height: calc(300px + 30cqw);
     overflow: hidden;
     z-index: 0;
+
+    animation: parallax-sky linear;
+    animation-duration: 1ms; /* firefox bug fix */
+    animation-timeline: scroll(root);
+    animation-range: 0 calc(300px + 30cqw);
+  }
+
+  @keyframes parallax-sky {
+    from {
+      transform: translateY(0%);
+    }
+    to {
+      transform: translateY(90%);
+    }
   }
 
   .bg {

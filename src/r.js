@@ -18,12 +18,17 @@ export const prefs = createLocalStorageState(storeKey, {
   seenCompleted: false,
 })
 
-export const session = createSessionStorageState(storeKey, {})
+export const session = createSessionStorageState(storeKey, {
+  boardhistory: /** @type {Board[] | null} */ (null),
+  startAt: /** @type {number | null} */ (null),
+  streak: /** @type {number | null} */ (null),
+})
 
 export const route = createRouteState(storeKey, {
   page: /** @type {'title' | 'play'} */ ('title'),
   levelId: 'tutorial1',
   focusLevelId: /** @type {string | null} */ (null),
+  startAt: /** @type {number | null} */ (null),
 })
 
 export const images = {

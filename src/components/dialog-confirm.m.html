@@ -8,18 +8,21 @@
   import XDialog from './x-dialog.m.html'
 
   export default defineComponent({
-    tag: 'dialog-restart',
+    tag: 'dialog-confirm',
     document: import.meta.document,
     setup() {
       const state = reactive({
         refDialog: /** @type {XDialog | null} */ (null),
         onAccept: /** @type {(() => void) | null} */ (null),
+        message: '',
       })
 
       /**
+       * @param {string} message
        * @param {() => void} onAccept
        */
-      const open = (onAccept) => {
+      const open = (message, onAccept) => {
+        state.message = message
         state.onAccept = onAccept
         state.refDialog?.open()
       }
@@ -48,15 +51,16 @@
 
 <template>
   <x-dialog data-ref="state.refDialog" no-close>
-    <x-text class="title" value="あたらしいゲームを"></x-text>
-    <x-text class="title" value="はじめますか？"></x-text>
+    <template data-for="line in state.message.split('\n')">
+      <x-text class="title" data-prop-value="line"></x-text>
+    </template>
 
     <div class="buttons">
       <x-button shadow data-on-click="close">
-        <x-icon data-prop-svg-url="images.icon.close" color="darkorange"></x-icon>
+        <x-icon data-prop-svg-url="images.icon.close"></x-icon>
       </x-button>
       <x-button shadow data-on-click="accept">
-        <x-icon data-prop-svg-url="images.icon.circle" color="darkorange"></x-icon>
+        <x-icon data-prop-svg-url="images.icon.circle"></x-icon>
       </x-button>
     </div>
   </x-dialog>
@@ -78,5 +82,6 @@
     display: flex;
     justify-content: space-evenly;
     margin-top: 24px;
+    color: darkorange;
   }
 </style>

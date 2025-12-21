@@ -1,7 +1,7 @@
 <script type="module">
   import { defineComponent, onCleanup, reactive, toRaw } from 'elii'
   import { cloneBoard, getCompletionRate, isGoalState, isStuckState } from '@/rule/board-utils.js'
-  import { route, runtime, images, prefs, bgm, se } from '@/r.js'
+  import { route, runtime, images, prefs, bgm, se, session } from '@/r.js'
   import { getNextLevel, levels } from '@/rule/level.js'
 
   import './x-header.m.html'
@@ -11,7 +11,7 @@
   import './x-overlay.m.html'
   import './x-text.m.html'
   import DialogHelp from './dialog-help.m.html'
-  import DialogRestart from './dialog-restart.m.html'
+  import DialogConfirm from './dialog-confirm.m.html'
   import PlayBoard from './play-board.m.html'
 
   export default defineComponent({
@@ -34,22 +34,40 @@
           wins: 0,
           streak: 0,
           highestStreak: 0,
-          seed: null,
         }
       }
 
       const levelStats = prefs.levelStats[level.id]
 
-      let boardhistory = [level.createBoard(levelStats.seed)]
+      if (session.startAt !== route.state.startAt) {
+        session.startAt = route.state.startAt
+        session.boardhistory = null
+        session.streak = null
+      }
 
-      levelStats.seed = boardhistory[0].seed
+      let boardhistory = /** @type {Board[]} */ ([])
+
+      if (session.boardhistory) {
+        boardhistory = toRaw(session.boardhistory, true).map(cloneBoard)
+      }
+
+      if (boardhistory.length === 0) {
+        boardhistory = [level.createBoard(null)]
+        session.boardhistory = boardhistory.map(cloneBoard)
+      }
+
+      if (session.streak === null) {
+        session.streak = levelStats.streak
+      }
+
+      levelStats.streak = 0
 
       const state = reactive({
-        board: cloneBoard(boardhistory[0]),
-        completionRate: getCompletionRate(boardhistory[0]),
-        isFirstMove: true,
+        board: cloneBoard(boardhistory[boardhistory.length - 1]),
+        completionRate: getCompletionRate(boardhistory[boardhistory.length - 1]),
+        isFirstMove: boardhistory.length === 1,
         isVisibleLevelStats: levelStats.wins > 0,
-        refRestart: /** @type {DialogRestart | null} */ (null),
+        refConfirm: /** @type {DialogConfirm | null} */ (null),
         refHelp: /** @type {DialogHelp | null} */ (null),
         refPlayBoard: /** @type {PlayBoard | null} */ (null),
       })
@@ -65,6 +83,14 @@
           state.refHelp?.open([level.helpPageId])
         }
       })
+
+      const confirmGoToTitle = () => {
+        if (runtime.result === 'success') {
+          goToTitle()
+        } else {
+          state.refConfirm?.open('タイトルに\nもどりますか？', goToTitle)
+        }
+      }
 
       const goToTitle = () => {
         let levelId = level.id
@@ -84,18 +110,20 @@
         if (runtime.result === 'success') {
           restart()
         } else {
-          state.refRestart?.open(restart)
+          state.refConfirm?.open('あたらしいゲームを\nはじめますか？', restart)
         }
       }
 
       const restart = () => {
-        if (!runtime.result) levelStats.streak = 0
+        if (runtime.result !== 'success') levelStats.streak = 0
         runtime.result = null
         window.clearTimeout(failureTimeoutId)
         failureTimeoutId = 0
 
         boardhistory = [level.createBoard(null)]
-        levelStats.seed = boardhistory[0].seed
+        session.boardhistory = boardhistory.map(cloneBoard)
+        session.streak = levelStats.streak
+        levelStats.streak = 0
 
         state.board = cloneBoard(boardhistory[0])
         state.completionRate = getCompletionRate(boardhistory[0])
@@ -123,6 +151,7 @@
 
         state.isFirstMove = false
         boardhistory.push(cloneBoard(toRaw(state.board, true)))
+        session.boardhistory = boardhistory.map(cloneBoard)
 
         if (runtime.result || failureTimeoutId) return
 
@@ -130,15 +159,16 @@
           state.completionRate = 1
           runtime.result = 'success'
           levelStats.wins++
-          levelStats.streak++
-          levelStats.seed = null
+          levelStats.streak = (session.streak ?? 0) + 1
+          session.streak = null
+          session.boardhistory = null
+
           if (levelStats.streak > levelStats.highestStreak) {
             levelStats.highestStreak = levelStats.streak
           }
           se.clear.play()
         } else if (isStuckState(state.board)) {
           state.completionRate = -1
-          levelStats.streak = 0
           runtime.result = 'failure'
         } else {
           state.completionRate = getCompletionRate(state.board)
@@ -147,12 +177,13 @@
 
       return {
         images,
+        session,
         runtime,
         state,
         level,
         levelStats,
         helpPageId: (level.helpPageId || level.silentHelpPageId) ?? 'basic',
-        goToTitle,
+        confirmGoToTitle,
         confirmRestart,
         undo,
         onBlockMove,
@@ -163,8 +194,8 @@
 
 <template>
   <x-header data-prop-help-page-id="helpPageId">
-    <x-button slot="left" shadow data-on-click="goToTitle">
-      <x-icon data-prop-svg-url="images.icon.back"></x-icon>
+    <x-button slot="left" shadow data-on-click="confirmGoToTitle">
+      <x-icon data-class-blink="runtime.result === 'success'" data-prop-svg-url="images.icon.back"></x-icon>
     </x-button>
     <div slot="center" class="level-info" data-class-visible="!state.isVisibleLevelStats">
       <div class="level-display-id" data-text="level.displayId"></div>
@@ -174,10 +205,10 @@
       <div class="level-stats-name">Wins:</div>
       <div class="level-stats-value" data-text="levelStats.wins"></div>
       <div class="level-stats-name">Streak:</div>
-      <div class="level-stats-value" data-text="levelStats.streak"></div>
+      <div class="level-stats-value" data-text="session.streak ?? levelStats.streak"></div>
     </div>
     <x-button slot="right" shadow data-on-click="confirmRestart">
-      <x-icon data-prop-svg-url="images.icon.restart"></x-icon>
+      <x-icon data-class-blink="runtime.result === 'success'" data-prop-svg-url="images.icon.restart"></x-icon>
     </x-button>
     <x-button
       slot="right"
@@ -213,7 +244,7 @@
     <x-text class="success-text" data-class-active="runtime.result === 'success'" value="VICTORY" shadow></x-text>
   </x-overlay>
 
-  <dialog-restart data-ref="state.refRestart"></dialog-restart>
+  <dialog-confirm data-ref="state.refConfirm"></dialog-confirm>
   <dialog-help data-ref="state.refHelp"></dialog-help>
 </template>
 
@@ -261,6 +292,21 @@
 
   .content {
     padding: calc(50px + 10cqw) 0 0;
+  }
+
+  x-icon.blink {
+    animation: icon-blink 2s steps(2, jump-none) infinite;
+  }
+
+  @keyframes icon-blink {
+    0% {
+      color: gold;
+      --wave-color: #fff;
+    }
+    100% {
+      color: darkorange;
+      --wave-color: #ffcc88;
+    }
   }
 
   .level-info {

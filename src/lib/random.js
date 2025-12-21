@@ -3,7 +3,7 @@
  * @param {number} [initialSeed]
  */
 export function createRandom(initialSeed) {
-  let seed = initialSeed ?? Math.floor(Math.random() * 0x100000000)
+  let seed = initialSeed ?? genRandomSeed()
 
   const next = () => {
     seed |= 0
@@ -27,4 +27,8 @@ export function createRandom(initialSeed) {
       seed = value
     },
   }
+}
+
+export function genRandomSeed() {
+  return Math.floor(Math.random() * 0x100000000)
 }

@@ -8,7 +8,6 @@
     props: {
       svgUrl: '',
       disabled: false,
-      color: 'gold',
       shadow: true,
     },
     setup(props) {
@@ -57,11 +56,12 @@
       paint-order="stroke"
     />
     <!-- ベース塗り -->
-    <use data-attr-href="`${props.svgUrl}#icon`" data-attr-fill="props.disabled ? '#ccc' : '#fff'" />
+    <use class="base" data-class-disabled="props.disabled" data-attr-href="`${props.svgUrl}#icon`" />
     <!-- 上部塗り（通常時のみ波マスク適用） -->
     <use
+      class="fill"
+      data-class-disabled="props.disabled"
       data-attr-href="`${props.svgUrl}#icon`"
-      data-attr-fill="props.disabled ? 'none' : props.color"
       data-attr-mask="props.disabled ? '' : 'url(#waveMask)'"
     />
   </svg>
@@ -86,5 +86,25 @@
 
   .stroke-inner {
     stroke-width: var(--border-width);
+  }
+
+  .base {
+    &.disabled {
+      fill: #ccc;
+    }
+
+    &:not(.disabled) {
+      fill: var(--wave-color, #fff);
+    }
+  }
+
+  .fill {
+    &.disabled {
+      fill: none;
+    }
+
+    &:not(.disabled) {
+      fill: currentColor;
+    }
   }
 </style>

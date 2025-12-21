@@ -184,23 +184,12 @@ export function shuffleBlocks(board, maxMoves = 20, trials = 20, getPuzzleScore,
   getPuzzleScore = getPuzzleScore ?? getDefaultPuzzleScore
   getMoveWeight = getMoveWeight ?? getDefaultMoveWeight
 
-  const hasSeed = !Number.isNaN(board.seed)
-
-  if (hasSeed) {
-    random.seed = board.seed
-    trials = 1
-  }
-
   let bestScore = -Infinity
   let bestBoard = board
   let bestCompletionRate = Infinity
 
   for (let j = 0; j < trials; j++) {
     const clonedBoard = cloneBoard(board)
-
-    if (!hasSeed) {
-      clonedBoard.seed = random.seed
-    }
 
     shuffleColors(clonedBoard)
     shuffleLines(clonedBoard)

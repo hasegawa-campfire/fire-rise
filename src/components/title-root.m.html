@@ -1,6 +1,6 @@
 <script type="module">
   import { createMemo, defineComponent, reactive } from 'elii'
-  import { route, prefs, bgm, se } from '@/r.js'
+  import { route, prefs, bgm, se, session } from '@/r.js'
   import { levels } from '@/rule/level.js'
 
   import './x-header.m.html'
@@ -35,7 +35,11 @@
        */
       const goToPlay = (levelId) => {
         if (levels.find((level) => level.id === levelId)?.isUnlocked()) {
-          route.pushState({ page: 'play', levelId })
+          const startAt = Date.now()
+          session.startAt = startAt
+          session.boardhistory = null
+          session.streak = null
+          route.pushState({ page: 'play', levelId, startAt })
           se.start.play()
         }
       }
@@ -44,8 +48,11 @@
         if (!prefs.seenCompleted && memo.isCompleted) {
           prefs.seenCompleted = true
           window.scroll({ top: 0, behavior: 'smooth' })
-        } else if (route.state.focusLevelId) {
-          state.refStages[route.state.focusLevelId]?.scrollIntoView({ block: 'center' })
+        } else {
+          const rect = state.refStages[route.state.focusLevelId]?.getBoundingClientRect()
+          if (!rect) return
+          const targetTop = window.pageYOffset + rect.top - window.innerHeight / 2 + rect.height / 2
+          window.scrollTo({ top: targetTop, behavior: 'instant' })
         }
       })
 

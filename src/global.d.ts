@@ -61,7 +61,6 @@ interface LevelStats {
   wins: number
   streak: number
   highestStreak: number
-  seed: number | null
 }
 
 declare const CACHE_PATTERNS: string[]

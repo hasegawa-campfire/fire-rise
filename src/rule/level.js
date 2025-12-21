@@ -1,6 +1,7 @@
 import { prefs } from '@/r.js'
 import { blockColors, shuffleBlocks, random } from './board-utils.js'
 import { createBlankBoard, times } from './level-utils.js'
+import { genRandomSeed } from '@/lib/random.js'
 
 /** @type {Level[]} */
 export const levels = [
@@ -90,7 +91,6 @@ export const levels = [
     id: 'basic2',
     displayId: 'Level 1-2',
     name: 'さんれつ',
-    helpPageId: 'save',
     isVisible: () => prefs.levelStats['basic1']?.wins > 0,
     isUnlocked: () => prefs.levelStats['basic1']?.wins > 0,
     createBoard(seed) {
@@ -419,8 +419,7 @@ export const levels = [
       return levelIds.every((levelId) => prefs.levelStats[levelId]?.wins > 0)
     },
     createBoard(seed) {
-      if (seed !== null) random.seed = seed
-      const currentSeed = random.seed
+      seed = random.seed = seed ?? genRandomSeed()
 
       const streak = prefs.levelStats['outro1']?.streak ?? 0
       const limitStreak = Math.min(streak, 9)
@@ -501,10 +500,8 @@ export const levels = [
         }
       }
 
-      const board = createBlankBoard(this, null, lineList, blockColors)
-      const shuffledBoard = shuffleBlocks(board, 100)
-      shuffledBoard.seed = currentSeed
-      return shuffledBoard
+      const board = createBlankBoard(this, seed, lineList, blockColors)
+      return shuffleBlocks(board, 100)
     },
   },
 ]

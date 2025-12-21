@@ -6,7 +6,9 @@ import {
   blockOverlap,
   linePaddingTop,
   linePaddingBottom,
+  random,
 } from './board-utils.js'
+import { genRandomSeed } from '@/lib/random.js'
 
 const gridUnit = blockHeight - blockOverlap
 const overHeight = blockOverlap + linePaddingTop + linePaddingBottom
@@ -36,9 +38,11 @@ export function times(length, mapfn) {
  * @returns {Board}
  */
 export function createBlankBoard(level, seed, lineList, colors) {
+  seed = random.seed = seed ?? genRandomSeed()
+
   const board = {
     levelId: level.id,
-    seed: seed ?? NaN,
+    seed,
     disableEmptyDrop: false, // 廃止予定
     steps: 0,
     lines: {},
