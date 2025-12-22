@@ -71,20 +71,21 @@ export const images = {
   halfTone: loadAssetUrl('images/half-tone.png'),
   star: loadAssetUrl('images/star.png'),
   boardBg: loadAssetUrl('images/board-bg.png'),
-  icon: {
-    audioOn: loadAssetUrl('images/icon-audio-on.svg'),
-    audioOff: loadAssetUrl('images/icon-audio-off.svg'),
-    help: loadAssetUrl('images/icon-help.svg'),
-    back: loadAssetUrl('images/icon-back.svg'),
-    close: loadAssetUrl('images/icon-close.svg'),
-    lock: loadAssetUrl('images/icon-lock.svg'),
-    undo: loadAssetUrl('images/icon-undo.svg'),
-    restart: loadAssetUrl('images/icon-restart.svg'),
-    circle: loadAssetUrl('images/icon-circle.svg'),
-    arrowLeft: loadAssetUrl('images/icon-arrow-left.svg'),
-    arrowRight: loadAssetUrl('images/icon-arrow-right.svg'),
-    finger: loadAssetUrl('images/icon-finger.svg'),
-  },
+}
+
+export const icons = {
+  audioOn: './static/icons/audio-on.svg',
+  audioOff: './static/icons/audio-off.svg',
+  help: './static/icons/help.svg',
+  back: './static/icons/back.svg',
+  close: './static/icons/close.svg',
+  lock: './static/icons/lock.svg',
+  undo: './static/icons/undo.svg',
+  restart: './static/icons/restart.svg',
+  circle: './static/icons/circle.svg',
+  arrowLeft: './static/icons/arrow-left.svg',
+  arrowRight: './static/icons/arrow-right.svg',
+  finger: './static/icons/finger.svg',
 }
 
 export const bgm = {

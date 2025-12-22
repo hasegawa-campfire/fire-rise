@@ -65,3 +65,4 @@ interface LevelStats {
 
 declare const CACHE_PATTERNS: string[]
 declare const ASSET_FILES: [string, [number, number]][]
+declare const ASSET_BUFFER: ArrayBuffer | null

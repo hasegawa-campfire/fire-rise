@@ -1,7 +1,7 @@
 <script type="module">
   import { defineComponent, onCleanup, reactive, toRaw } from 'elii'
   import { cloneBoard, getCompletionRate, isGoalState, isStuckState } from '@/rule/board-utils.js'
-  import { route, runtime, images, prefs, bgm, se, session } from '@/r.js'
+  import { route, runtime, icons, prefs, bgm, se, session } from '@/r.js'
   import { getNextLevel, levels } from '@/rule/level.js'
 
   import './x-header.m.html'
@@ -176,7 +176,7 @@
       }
 
       return {
-        images,
+        icons,
         session,
         runtime,
         state,
@@ -195,7 +195,7 @@
 <template>
   <x-header data-prop-help-page-id="helpPageId">
     <x-button slot="left" shadow data-on-click="confirmGoToTitle">
-      <x-icon data-class-blink="runtime.result === 'success'" data-prop-svg-url="images.icon.back"></x-icon>
+      <x-icon data-class-blink="runtime.result === 'success'" data-prop-svg-url="icons.back"></x-icon>
     </x-button>
     <div slot="center" class="level-info" data-class-visible="!state.isVisibleLevelStats">
       <div class="level-display-id" data-text="level.displayId"></div>
@@ -208,7 +208,7 @@
       <div class="level-stats-value" data-text="session.streak ?? levelStats.streak"></div>
     </div>
     <x-button slot="right" shadow data-on-click="confirmRestart">
-      <x-icon data-class-blink="runtime.result === 'success'" data-prop-svg-url="images.icon.restart"></x-icon>
+      <x-icon data-class-blink="runtime.result === 'success'" data-prop-svg-url="icons.restart"></x-icon>
     </x-button>
     <x-button
       slot="right"
@@ -217,7 +217,7 @@
       data-prop-inert="state.isFirstMove || runtime.result === 'success'"
     >
       <x-icon
-        data-prop-svg-url="images.icon.undo"
+        data-prop-svg-url="icons.undo"
         data-prop-disabled="state.isFirstMove || runtime.result === 'success'"
       ></x-icon>
     </x-button>

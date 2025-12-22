@@ -1,6 +1,5 @@
-import { readFile, glob } from 'node:fs/promises'
+import { readFile, glob, writeFile } from 'node:fs/promises'
 import * as esbuild from 'esbuild'
-import { htmlPlugin } from '@craftamap/esbuild-plugin-html'
 import { copy } from 'esbuild-plugin-copy'
 import * as cheerio from 'cheerio'
 import { packAssets } from './src/lib/asset-util.mjs'
@@ -9,7 +8,7 @@ import { htmlModules } from 'html-modules/esbuild-plugin'
 const $ = cheerio.load(await readFile('src/index.html'))
 $('[data-prod-remove]').remove()
 $('template[data-prod-unwrap]').replaceWith(function () {
-  return $(this).contents()
+  return $(this).contents().html()
 })
 
 await esbuild.build({
@@ -24,16 +23,6 @@ await esbuild.build({
   },
   plugins: [
     htmlModules(),
-    htmlPlugin({
-      files: [
-        {
-          entryPoints: ['src/main.js'],
-          filename: 'index.html',
-          htmlTemplate: $.html(),
-          scriptLoading: 'module',
-        },
-      ],
-    }),
     copy({
       assets: [
         { from: './src/static/**/*', to: './static' },
@@ -46,6 +35,8 @@ await esbuild.build({
     'package.json': './package.json',
   },
 })
+
+await writeFile('./dist/index.html', $.html())
 
 const cachePaths = await Array.fromAsync(glob('**/*.*', { cwd: './dist', exclude: ['index.html'] }))
 

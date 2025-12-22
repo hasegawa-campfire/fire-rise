@@ -1,6 +1,6 @@
 <script type="module">
   import { defineComponent, reactive } from 'elii'
-  import { images } from '@/r.js'
+  import { icons } from '@/r.js'
 
   import './x-button.m.html'
   import './x-icon.m.html'
@@ -41,7 +41,7 @@
       }
 
       return {
-        images,
+        icons,
         props,
         state,
         close,
@@ -67,7 +67,7 @@
         <div class="bg"></div>
         <slot></slot>
         <x-button class="close" data-on-click="close" data-prop-hidden="props.noClose">
-          <x-icon data-prop-svg-url="images.icon.close"></x-icon>
+          <x-icon data-prop-svg-url="icons.close"></x-icon>
         </x-button>
       </div>
     </div>

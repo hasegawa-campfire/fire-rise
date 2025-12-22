@@ -108,11 +108,16 @@
       app-root + h2 {
         display: none;
       }
+
+      h2 {
+        text-align: center;
+        color: #000;
+      }
     </style>
   </head>
   <body>
     <app-root></app-root>
-    <h2>ご利用のブラウザはサポートされていません</h2>
+    <h2 id="caution">ご利用のブラウザはサポートされていません</h2>
 
     <script type="module" data-prod-remove>
       await navigator.serviceWorker.register('./sw.dev.js', { type: 'module' })
@@ -124,11 +129,20 @@
       await import('./main.js')
     </script>
 
-    <template data-prod-expand>
-      <script>
+    <template data-prod-unwrap>
+      <script type="module">
         if (CSS.supports && CSS.supports('selector(&)')) {
           navigator.serviceWorker.register('sw.js')
         } else {
+          document.querySelector('app-root').remove()
+        }
+        try {
+          const res = await fetch('./assets.bin')
+          window.ASSET_BUFFER = await res.arrayBuffer()
+          await import('./main.js')
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error)
+          caution.textContent = `初期化に失敗しました: ${message}`
           document.querySelector('app-root').remove()
         }
       </script>

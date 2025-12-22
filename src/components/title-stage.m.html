@@ -1,6 +1,6 @@
 <script type="module">
   import { createMemo, defineComponent } from 'elii'
-  import { images, prefs } from '@/r.js'
+  import { icons, prefs } from '@/r.js'
 
   import './x-text.m.html'
   import './x-icon.m.html'
@@ -25,7 +25,7 @@
       })
 
       return {
-        images,
+        icons,
         props,
         memo,
       }
@@ -51,7 +51,7 @@
 
     <x-icon
       class="level-lock"
-      data-prop-svg-url="images.icon.lock"
+      data-prop-svg-url="icons.lock"
       data-prop-hidden="!memo.isLocked"
       data-prop-shadow="false"
     ></x-icon>

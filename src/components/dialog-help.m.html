@@ -1,6 +1,6 @@
 <script type="module">
   import { createMemo, defineComponent, reactive, untrack } from 'elii'
-  import { images, prefs, se } from '@/r.js'
+  import { images, prefs, se, icons } from '@/r.js'
   import { blockWidth, blockHeight } from '@/rule/board-utils.js'
   import { version } from 'package.json'
 
@@ -81,6 +81,7 @@
         blockWidth,
         blockHeight,
         images,
+        icons,
         state,
         memo,
         version,
@@ -134,7 +135,7 @@
             <img class="block-image" data-prop-src="images.takibi.bg.black" />
             <img class="block-image" data-prop-src="images.takibi.body.red" />
             <img class="block-image" data-prop-src="images.takibi.face.default" />
-            <x-icon class="move-icon" data-prop-svg-url="images.icon.finger"></x-icon>
+            <x-icon class="move-icon" data-prop-svg-url="icons.finger"></x-icon>
           </div>
           <p>を</p>
           <p>　まとめよう！</p>
@@ -153,11 +154,11 @@
         <div class="page" data-class-current="memo.currentPageId === 'menu'">
           <x-text class="title" value="こまったときは"></x-text>
           <div class="icon-preview">
-            <x-icon data-prop-svg-url="images.icon.undo"></x-icon>
+            <x-icon data-prop-svg-url="icons.undo"></x-icon>
           </div>
           <p>ひとつ前にもどします</p>
           <div class="icon-preview">
-            <x-icon data-prop-svg-url="images.icon.restart"></x-icon>
+            <x-icon data-prop-svg-url="icons.restart"></x-icon>
           </div>
           <p>あたらしくやり直します</p>
         </div>
@@ -198,7 +199,7 @@
     <template data-if="memo.totalPages > 1">
       <div class="page-nav">
         <x-button data-on-click="prevPage">
-          <x-icon data-prop-svg-url="images.icon.arrowLeft"></x-icon>
+          <x-icon data-prop-svg-url="icons.arrowLeft"></x-icon>
         </x-button>
 
         <div class="page-nav-dots">
@@ -212,7 +213,7 @@
         </div>
 
         <x-button data-on-click="nextPage">
-          <x-icon data-prop-svg-url="images.icon.arrowRight"></x-icon>
+          <x-icon data-prop-svg-url="icons.arrowRight"></x-icon>
         </x-button>
       </div>
     </template>

@@ -1,6 +1,6 @@
 <script type="module">
   import { createMemo, defineComponent, reactive } from 'elii'
-  import { images, prefs } from '@/r.js'
+  import { icons, prefs } from '@/r.js'
 
   import './x-button.m.html'
   import './x-icon.m.html'
@@ -34,7 +34,7 @@
       }
 
       return {
-        images,
+        icons,
         props,
         state,
         memo,
@@ -56,10 +56,10 @@
     <slot name="right"></slot>
 
     <x-button data-on-click="openSettings" shadow>
-      <x-icon data-prop-svg-url="memo.isMute ? images.icon.audioOff : images.icon.audioOn"></x-icon>
+      <x-icon data-prop-svg-url="memo.isMute ? icons.audioOff : icons.audioOn"></x-icon>
     </x-button>
     <x-button data-on-click="openHelp" shadow>
-      <x-icon data-prop-svg-url="images.icon.help"></x-icon>
+      <x-icon data-prop-svg-url="icons.help"></x-icon>
     </x-button>
   </div>
 

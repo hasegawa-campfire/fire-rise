@@ -1,6 +1,6 @@
 <script type="module">
   import { defineComponent, reactive } from 'elii'
-  import { images } from '@/r.js'
+  import { icons } from '@/r.js'
 
   import './x-text.m.html'
   import './x-icon.m.html'
@@ -37,7 +37,7 @@
       }
 
       return {
-        images,
+        icons,
         state,
         $expose: {
           open,
@@ -57,10 +57,10 @@
 
     <div class="buttons">
       <x-button shadow data-on-click="close">
-        <x-icon data-prop-svg-url="images.icon.close"></x-icon>
+        <x-icon data-prop-svg-url="icons.close"></x-icon>
       </x-button>
       <x-button shadow data-on-click="accept">
-        <x-icon data-prop-svg-url="images.icon.circle"></x-icon>
+        <x-icon data-prop-svg-url="icons.circle"></x-icon>
       </x-button>
     </div>
   </x-dialog>
