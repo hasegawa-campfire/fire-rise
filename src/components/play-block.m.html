@@ -119,6 +119,13 @@
         }
       }
 
+      /**
+       * @param {DragEvent} e
+       */
+      const onDragStart = (e) => {
+        e.preventDefault()
+      }
+
       return {
         images,
         runtime,
@@ -132,6 +139,7 @@
         linePaddingTop,
         onTransitionStart,
         onTransitionEnd,
+        onDragStart,
       }
     },
   })
@@ -150,21 +158,25 @@
     data-style-transition-duration="`${memo.delay}ms`"
     data-on-transitionstart="onTransitionStart"
     data-on-transitionend="onTransitionEnd"
+    data-on-dragstart="onDragStart"
   >
     <div class="block-image-group" data-style-z-index="memo.bgZIndex">
       <img
         class="block-image selected ignore-events"
+        draggable="false"
         data-prop-src="images.takibi.leg.orange"
         data-prop-hidden="!(memo.isBottom)"
       />
       <img
         class="block-image ignore-events"
+        draggable="false"
         data-prop-src="images.takibi.leg.white"
         data-prop-hidden="!(memo.isBottom && (memo.isSelected || memo.isSuccess))"
       />
-      <img class="block-image selected" data-prop-src="images.takibi.bg.orange" />
+      <img class="block-image selected" draggable="false" data-prop-src="images.takibi.bg.orange" />
       <img
         class="block-image"
+        draggable="false"
         data-prop-src="images.takibi.bg.white"
         data-prop-hidden="!(memo.isSelected || memo.isSuccess)"
       />
@@ -172,27 +184,40 @@
     <div class="block-image-group" data-style-z-index="memo.unitBgZIndex">
       <img
         class="block-image ignore-events"
+        draggable="false"
         data-prop-src="images.takibi.leg.black"
         data-prop-hidden="!(memo.isBottom)"
       />
-      <img class="block-image" data-prop-src="images.takibi.bg.black" />
+      <img class="block-image" draggable="false" data-prop-src="images.takibi.bg.black" />
     </div>
     <img
       class="block-image"
+      draggable="false"
       data-class-flash="memo.isSuccess"
       data-prop-src="images.takibi.body[memo.color]"
       data-style-animation-delay="`${(memo.index % 2) * 0.2}s`"
       data-style-z-index="memo.zIndex"
     />
     <div class="block-image-group" data-style-z-index="memo.zIndex" data-prop-hidden="!(memo.isUnitHead)">
-      <img class="block-image face" data-prop-src="images.takibi.face.default" data-class-visible="memo.isSelected" />
       <img
         class="block-image face"
+        draggable="false"
+        data-prop-src="images.takibi.face.default"
+        data-class-visible="memo.isSelected"
+      />
+      <img
+        class="block-image face"
+        draggable="false"
         data-prop-src="images.takibi.face.success"
         data-class-visible="runtime.result === 'success'"
       />
-      <img class="block-image face" data-prop-src="images.takibi.face.failure" data-class-visible="state.isWink" />
-      <img class="block-image face visible" data-prop-src="images.takibi.face[memo.color]" />
+      <img
+        class="block-image face"
+        draggable="false"
+        data-prop-src="images.takibi.face.failure"
+        data-class-visible="state.isWink"
+      />
+      <img class="block-image face visible" draggable="false" data-prop-src="images.takibi.face[memo.color]" />
     </div>
   </div>
 </template>
@@ -240,6 +265,9 @@
     transition-timing-function: ease-out;
     transition-duration: 0.3s;
     will-change: opacity;
+    user-select: none;
+    -webkit-user-drag: none;
+    -webkit-touch-callout: none;
 
     .ready & {
       opacity: 1;
