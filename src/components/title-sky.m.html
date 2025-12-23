@@ -72,59 +72,69 @@
 </script>
 
 <template>
-  <div class="bg"></div>
+  <div class="content">
+    <div class="bg"></div>
 
-  <div class="stars">
-    <template data-for="star in stars" data-key="star">
-      <div
-        class="star"
-        data-style-width="`${star.size}px`"
-        data-style-height="`${star.size}px`"
-        data-style-top="`${star.y * 100}%`"
-        data-style-opacity="star.opacity"
-        data-style-animation-duration="`${star.duration}s`"
-        data-style-animation-delay="`${star.delay * -star.duration}s`"
-        data-on-animationiteration="(e) => onStarIteration(star, e)"
-      >
-        <div class="star-image"></div>
-      </div>
-    </template>
-  </div>
-
-  <div class="meteors">
-    <template data-for="meteor in meteors" data-key="meteor">
-      <div
-        class="meteor"
-        data-style-width="`${meteor.size}px`"
-        data-style-height="`${meteor.size}px`"
-        data-style-left="`${meteor.x * 100}%`"
-        data-style--vx="`${meteor.vx * 100}cqw`"
-        data-style-animation-duration="`${meteor.duration}s`"
-        data-style-animation-delay="`${meteor.delay * -meteor.duration}s`"
-        data-on-animationiteration="(e) => onStarIteration(meteor, e)"
-      >
+    <div class="stars">
+      <template data-for="star in stars" data-key="star">
         <div
-          class="meteor-image"
-          data-style-animation-duration="`2s, ${meteor.duration * 0.2}s`"
-          data-style-color="meteor.color"
-        ></div>
-      </div>
-    </template>
+          class="star"
+          data-style-width="`${star.size}px`"
+          data-style-height="`${star.size}px`"
+          data-style-top="`${star.y * 100}%`"
+          data-style-opacity="star.opacity"
+          data-style-animation-duration="`${star.duration}s`"
+          data-style-animation-delay="`${star.delay * -star.duration}s`"
+          data-on-animationiteration="(e) => onStarIteration(star, e)"
+        >
+          <div class="star-image"></div>
+        </div>
+      </template>
+    </div>
+
+    <div class="meteors">
+      <template data-for="meteor in meteors" data-key="meteor">
+        <div
+          class="meteor"
+          data-style-width="`${meteor.size}px`"
+          data-style-height="`${meteor.size}px`"
+          data-style-left="`${meteor.x * 100}%`"
+          data-style--vx="`${meteor.vx * 100}cqw`"
+          data-style-animation-duration="`${meteor.duration}s`"
+          data-style-animation-delay="`${meteor.delay * -meteor.duration}s`"
+          data-on-animationiteration="(e) => onStarIteration(meteor, e)"
+        >
+          <div
+            class="meteor-image"
+            data-style-animation-duration="`2s, ${meteor.duration * 0.2}s`"
+            data-style-color="meteor.color"
+          ></div>
+        </div>
+      </template>
+    </div>
   </div>
 </template>
 
 <style>
   :host {
+    --sky-height: calc(300px + 30cqw);
     display: block;
-    position: relative;
-    height: calc(300px + 30cqw);
+    height: var(--sky-height);
+  }
+
+  .content {
+    position: fixed;
+    top: 0;
+    left: calc(50% - 50cqw);
+    width: 100cqw;
+    height: var(--sky-height);
     overflow: hidden;
     z-index: 0;
 
     animation: parallax-sky linear;
-    animation-duration: 1ms; /* firefox bug fix */
+    animation-duration: 1ms;
     animation-timeline: scroll(root);
-    animation-range: 0 calc(300px + 30cqw);
+    animation-range: 0 var(--sky-height);
   }
 
   @keyframes parallax-sky {
@@ -132,7 +142,7 @@
       transform: translateY(0%);
     }
     to {
-      transform: translateY(90%);
+      transform: translateY(-15%);
     }
   }
 

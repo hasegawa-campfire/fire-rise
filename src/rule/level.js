@@ -110,7 +110,7 @@ export const levels = [
   {
     id: 'basic3',
     displayId: 'Level 1-3',
-    name: 'よんれつEX',
+    name: 'よんれつEx',
     silentHelpPageId: 'ex',
     isVisible: () => prefs.levelStats['basic1']?.wins > 0,
     isUnlocked: () => prefs.levelStats['basic2']?.wins > 0,
